@@ -1,12 +1,7 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { firstValueFrom } from 'rxjs';
-import {
-  WeightClass,
-  Division,
-  RankingEntry,
-  Record,
-} from './usapldb.enteties';
+import { WeightClass, Division, RankingEntry, Record } from './usapldb.enteties';
 import {
   DisciplineOptions,
   DivisionOptions,
