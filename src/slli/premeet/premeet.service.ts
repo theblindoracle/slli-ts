@@ -13,7 +13,7 @@ export class SlliPreMeetService {
 
   async generatePreMeetReport() {
     // get roster and their divisions from liftingcast
-    const liftingcastData = await this.liftingcastService.getMeetData();
+    // const liftingcastData = await this.liftingcastService.getMeetData();
     // get records from usapl database
     // get relavent records for lifter
     // save to file
