@@ -1,7 +1,7 @@
-import { AnimationState } from './singularlive.enteties';
+import {AnimationState} from './singularlive.enteties';
 
-export type UpdateControlAppContentDTO = {
+export type UpdateControlAppContentDTO<TPayload = any> = {
   subcompositionId: string;
-  payload?: any;
+  payload?: TPayload;
   state?: AnimationState;
 };
