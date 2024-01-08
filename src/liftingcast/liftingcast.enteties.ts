@@ -42,7 +42,7 @@ export class Lifter {
   benchRackHeight: string;
   platform: string;
   divisions: LifterDivision[];
-  lifts: LifterLifts[];
+  lifts: LifterLifts;
 }
 
 export class LifterDivision {
