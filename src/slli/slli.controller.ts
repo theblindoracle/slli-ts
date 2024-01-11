@@ -1,9 +1,9 @@
-import {Controller, Patch, Post} from '@nestjs/common';
-import {SlliService} from './slli.service';
+import { Controller, Patch, Post } from '@nestjs/common';
+import { SessionManagerService } from './slli.service';
 
 @Controller('slli')
 export class SlliController {
-  constructor(private readonly slliService: SlliService) {}
+  constructor(private readonly slliService: SessionManagerService) {}
 
   @Post('pre-meet')
   preMeet() {

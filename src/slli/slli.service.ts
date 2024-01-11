@@ -1,33 +1,33 @@
-import {Injectable, Logger} from '@nestjs/common';
-import {OnEvent} from '@nestjs/event-emitter';
-import {
-  LiftingcastEvents,
-  RefLightUpdatedEvent,
-} from 'src/liftingcast/liftingcast.event';
-import {LiftingcastService} from 'src/liftingcast/liftingcast.service';
+import { Injectable, Logger } from '@nestjs/common';
+import { LiftingcastService } from 'src/liftingcast/liftingcast.service';
 
 @Injectable()
-export class SlliService {
+export class SessionManagerService {
   constructor(private readonly liftingcastService: LiftingcastService) {}
-  private readonly logger = new Logger(SlliService.name);
+  private readonly logger = new Logger(SessionManagerService.name);
 
-  async startSession(meetId: string, platformId: string, meetPassword: string) {
-    this.liftingcastService.listenForDocumentChanges(
-      meetId,
-      platformId,
-      meetPassword,
-    );
-  }
+  private sessions = new Array<SessionDetails>();
 
-  @OnEvent(LiftingcastEvents.RefLightUpdatedEvent)
-  onRefLightUpdated(event: RefLightUpdatedEvent) {
-    console.log(event);
+  async startSession(
+    liftingcastMeetID: string,
+    liftingcastPlatformID: string,
+    liftingcastPassword: string,
+    singularAppToken: string,
+  ) {
+    const session = {
+      liftingcastMeetID,
+      liftingcastPlatformID,
+      liftingcastPassword,
+      singularAppToken,
+    } as SessionDetails;
+
+    this.sessions.push(session);
   }
 }
 
-type SlliSession = {
-  lcMeetId: string;
-  lcPlatformId: string;
-  meetPassword: string;
-  singularControlAppToken: string;
+type SessionDetails = {
+  liftingcastMeetID: string;
+  liftingcastPlatformID: string;
+  liftingcastPassword: string;
+  singularAppToken: string;
 };
