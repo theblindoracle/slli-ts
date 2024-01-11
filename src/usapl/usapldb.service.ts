@@ -1,7 +1,12 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { firstValueFrom } from 'rxjs';
-import { WeightClass, Division, RankingEntry, Record } from './usapldb.enteties';
+import {
+  WeightClass,
+  Division,
+  RankingEntry,
+  Record,
+} from './usapldb.enteties';
 import {
   DisciplineOptions,
   DivisionOptions,
@@ -15,7 +20,7 @@ import {
 @Injectable()
 export class UsaplDbService {
   private usaplDbBaseUrl = 'https://usapl.liftingdatabase.com/api';
-  constructor(private readonly httpService: HttpService) { }
+  constructor(private readonly httpService: HttpService) {}
 
   async getDivisions() {
     const url = `${this.usaplDbBaseUrl}/divisions`;

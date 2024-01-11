@@ -6,4 +6,4 @@ import { HttpModule } from '@nestjs/axios';
   imports: [HttpModule],
   providers: [SingularliveService],
 })
-export class SingularliveModule { }
+export class SingularliveModule {}

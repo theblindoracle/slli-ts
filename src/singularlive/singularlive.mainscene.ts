@@ -26,7 +26,7 @@ export class MainScene {
   constructor(
     private readonly appControlService: SingularliveService,
     private controlAppToken: string,
-  ) { }
+  ) {}
 
   async updateLights(refLights: RefLights) {
     const lightPayload: LightsPayload = {
@@ -271,7 +271,7 @@ export class MainScene {
 }
 
 class Widget<TPayload> {
-  constructor(readonly subcompositionId: string) { }
+  constructor(readonly subcompositionId: string) {}
   payload: Partial<TPayload>;
 }
 const leftLightInfractionCompId = 'fc070e8a-bea1-4a76-a577-22f9f22307c6';

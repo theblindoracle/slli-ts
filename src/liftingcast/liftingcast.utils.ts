@@ -1,4 +1,4 @@
-import {Lift, RefDecision} from './liftingcast.enteties';
+import { Lift, RefDecision } from './liftingcast.enteties';
 
 export const isLiftGood = (lift: Lift) => {
   return lift.result === 'good';

@@ -1,5 +1,5 @@
-import {Controller, Get} from '@nestjs/common';
-import {LiftingcastService} from './liftingcast.service';
+import { Controller, Get } from '@nestjs/common';
+import { LiftingcastService } from './liftingcast.service';
 
 @Controller('liftingcast')
 export class LiftingcastController {

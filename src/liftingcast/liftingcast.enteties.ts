@@ -84,7 +84,7 @@ export class Attempt {
   id: string;
   liftName: LiftName;
   attemptNumber: number;
-  lifter: {id: string};
+  lifter: { id: string };
 }
 
 export class Division {

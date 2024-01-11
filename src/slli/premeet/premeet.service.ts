@@ -1,8 +1,8 @@
-import {Injectable} from '@nestjs/common';
-import {MeetDocument} from 'src/liftingcast/liftingcast.enteties';
-import {LiftingcastService} from 'src/liftingcast/liftingcast.service';
-import {UsaplDbService} from 'src/usapl/usapldb.service';
-import {AgeGroup, EquipmentLevel, Gender} from '../slli.enteties';
+import { Injectable } from '@nestjs/common';
+import { MeetDocument } from 'src/liftingcast/liftingcast.enteties';
+import { LiftingcastService } from 'src/liftingcast/liftingcast.service';
+import { UsaplDbService } from 'src/usapl/usapldb.service';
+import { AgeGroup, EquipmentLevel, Gender } from '../slli.enteties';
 
 @Injectable()
 export class SlliPreMeetService {
@@ -39,7 +39,7 @@ class LiftingcastDivisionDecoder {
     const equipmentLevel = this.getEquipment(liftingcastDivisionName);
     const ageGroup = this.getAgeGroup(liftingcastDivisionName);
 
-    return {gender, equipmentLevel, ageGroup};
+    return { gender, equipmentLevel, ageGroup };
   }
 
   getGender(divisionName: string): Gender {
