@@ -45,19 +45,19 @@ export class MainScene {
 
     const compositionUpdates: UpdateControlAppContentDTO[] = [
       {
-        subcompositionId: lightsComposition.subcompositionId,
+        subCompositionId: lightsComposition.subCompositionId,
         payload: lightPayload,
       },
       {
-        subcompositionId: leftLightInfractionCompId,
+        subCompositionId: leftLightInfractionCompId,
         payload: leftInfractionBarPayload,
       },
       {
-        subcompositionId: rightLightInfractionCompId,
+        subCompositionId: rightLightInfractionCompId,
         payload: rightInfractionBarPayload,
       },
       {
-        subcompositionId: headLightInfractionCompId,
+        subCompositionId: headLightInfractionCompId,
         payload: headInfractionBarPayload,
       },
     ];
@@ -80,7 +80,7 @@ export class MainScene {
       payload.isDeadliftActive = false;
 
       compositionUpdates.push({
-        subcompositionId: squatComposition.subcompositionId,
+        subCompositionId: squatComposition.subCompositionId,
         payload: this.buildSquatPayload(currentLifter.lifts.squat),
       });
     } else if (currentAttempt.liftName === 'bench') {
@@ -89,7 +89,7 @@ export class MainScene {
       payload.isDeadliftActive = false;
 
       compositionUpdates.push({
-        subcompositionId: benchComposition.subcompositionId,
+        subCompositionId: benchComposition.subCompositionId,
         payload: this.buildBenchPayload(
           currentLifter.lifts.bench,
           getBestLiftWeight(currentLifter.lifts.squat),
@@ -101,7 +101,7 @@ export class MainScene {
       payload.isDeadliftActive = true;
 
       compositionUpdates.push({
-        subcompositionId: deadliftComposition.subcompositionId,
+        subCompositionId: deadliftComposition.subCompositionId,
         payload: this.buildDeadliftPayload(
           currentLifter.lifts.deadlift,
           getBestLiftWeight(currentLifter.lifts.squat),
@@ -129,7 +129,7 @@ export class MainScene {
     }
 
     compositionUpdates.push({
-      subcompositionId: bottomBarComposition.subcompositionId,
+      subCompositionId: bottomBarComposition.subCompositionId,
       payload: payload,
     });
     await this.appControlService.updateControlAppContent(
@@ -247,23 +247,23 @@ export class MainScene {
     ) {
       return payload;
     }
-    const infractionColors = [];
-
-    if (refLightState.cards.red === true) {
-      infractionColors.push(colors.liftInfactions.red);
-    }
-    if (refLightState.cards.blue === true) {
-      infractionColors.push(colors.liftInfactions.blue);
-    }
-    if (refLightState.cards.yellow === true) {
-      infractionColors.push(colors.liftInfactions.yellow);
-    }
-
-    if (infractionColors.length === 1) {
-      payload.infractionFullBarColor = infractionColors.pop();
-    } else if (infractionColors.length === 2) {
-      payload.infractionBarRightColor = infractionColors.pop();
-      payload.infractionBarLeftColor = infractionColors.pop();
+    if (refLightState.cards) {
+      const infractionColors = [];
+      if (refLightState.cards.red) {
+        infractionColors.push(colors.liftInfactions.red);
+      }
+      if (!!refLightState.cards.blue) {
+        infractionColors.push(colors.liftInfactions.blue);
+      }
+      if (!!refLightState.cards.yellow) {
+        infractionColors.push(colors.liftInfactions.yellow);
+      }
+      if (infractionColors.length === 1) {
+        payload.infractionFullBarColor = infractionColors.pop();
+      } else if (infractionColors.length === 2) {
+        payload.infractionBarRightColor = infractionColors.pop();
+        payload.infractionBarLeftColor = infractionColors.pop();
+      }
     }
 
     return payload;
@@ -271,9 +271,10 @@ export class MainScene {
 }
 
 class Widget<TPayload> {
-  constructor(readonly subcompositionId: string) {}
+  constructor(readonly subCompositionId: string) {}
   payload: Partial<TPayload>;
 }
+
 const leftLightInfractionCompId = 'fc070e8a-bea1-4a76-a577-22f9f22307c6';
 const headLightInfractionCompId = '8af04dc1-f884-4a16-9ebf-2be05251e54c';
 const rightLightInfractionCompId = 'cf1e8966-98c6-7abb-9d03-f2beaccb92d4';
@@ -295,7 +296,7 @@ const bottomBarComposition = new Widget<BottomBarPayload>(
 );
 
 const lightsComposition = new Widget<LightsPayload>(
-  '4b8a60fe-8f18-46f5-b829-0601f4a6a4d8',
+  '0c44bb70-1af3-4f0d-bf06-dd0cf34b78bf',
 );
 
 const isValueNullOrEmptyString = (value: any) => {
