@@ -5,10 +5,6 @@ import { UpdateControlAppContentDTO } from './singularlive.dtos';
 
 @Injectable()
 export class SingularliveService {
-  constructor() { }
-}
-
-export class SingularAppControlService {
   constructor(private readonly httpService: HttpService) { }
 
   private baseUrl = `https://app.singular.live/apiv2/controlapps`;

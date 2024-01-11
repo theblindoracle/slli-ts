@@ -13,7 +13,7 @@ import {
   LightsPayload,
   SquatPayload,
 } from './singularlive.payloads';
-import { SingularAppControlService } from './singularlive.service';
+import { SingularliveService } from './singularlive.service';
 import {
   getBestLiftWeight,
   isLiftGood,
@@ -23,8 +23,10 @@ import { colors } from './singularlive.constants';
 import { UpdateControlAppContentDTO } from './singularlive.dtos';
 
 export class MainScene {
-  constructor(private readonly appControlService: SingularAppControlService) { }
-  private controlAppToken: string;
+  constructor(
+    private readonly appControlService: SingularliveService,
+    private controlAppToken: string,
+  ) { }
 
   async updateLights(refLights: RefLights) {
     const lightPayload: LightsPayload = {
