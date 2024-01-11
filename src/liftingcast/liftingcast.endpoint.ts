@@ -1,7 +1,7 @@
-import {HttpService} from '@nestjs/axios';
-import {HttpStatus, Injectable, Logger} from '@nestjs/common';
-import {AxiosError, isAxiosError} from 'axios';
-import {catchError, retry, throwError, timer} from 'rxjs';
+import { HttpService } from '@nestjs/axios';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { AxiosError, isAxiosError } from 'axios';
+import { catchError, retry, throwError, timer } from 'rxjs';
 
 @Injectable()
 export class LiftingcastEndpoint {
@@ -12,14 +12,14 @@ export class LiftingcastEndpoint {
 
   constructor(private readonly httpService: HttpService) {
     this.httpService.axiosRef.interceptors.request.use((config) => {
-      this.logger.log(`REQUEST: ${config.url} ${config.params} ${config.data}`);
+      // this.logger.log(`REQUEST: ${config.url} ${config.params} ${config.data}`);
       return config;
     });
 
     this.httpService.axiosRef.interceptors.response.use((config) => {
-      this.logger.log(
-        `RESPONSE: ${config.config.url} ${config.status} ${config.statusText} ${config.data}`,
-      );
+      // this.logger.log(
+      //   `RESPONSE: ${config.config.url} ${config.status} ${config.statusText} ${config.data}`,
+      // );
       return config;
     });
   }
@@ -39,7 +39,7 @@ export class LiftingcastEndpoint {
       .get(url, {
         signal: abortController.signal,
         timeout: 55000,
-        headers: {Authorization: 'Basic ' + btoa(`${meetId}:${password}`)},
+        headers: { Authorization: 'Basic ' + btoa(`${meetId}:${password}`) },
       })
       .pipe(
         catchError((error: AxiosError) => {
