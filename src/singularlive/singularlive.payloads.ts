@@ -58,6 +58,10 @@ export type LightInfractionPayload = {
   infractionFullBarColor: SingularColor;
 };
 
+export type WeightClassPayload = {
+  classTitle: string;
+};
+
 type SingularColor =
   | {
       r: number;

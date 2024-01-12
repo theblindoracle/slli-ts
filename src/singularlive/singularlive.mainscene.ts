@@ -12,6 +12,7 @@ import {
   LightInfractionPayload,
   LightsPayload,
   SquatPayload,
+  WeightClassPayload,
 } from './singularlive.payloads';
 import { SingularliveService } from './singularlive.service';
 import {
@@ -68,25 +69,29 @@ export class MainScene {
     );
   }
 
-  async playAttemptChange(currentLifter: Lifter, currentAttempt: Attempt) {
-    const payload: Partial<BottomBarPayload> = {};
+  async playAttemptChange(
+    currentLifter: Lifter,
+    currentAttempt: Attempt,
+    divisionName: string,
+  ) {
+    const bottomBarPayload: Partial<BottomBarPayload> = {};
     const compositionUpdates: UpdateControlAppContentDTO[] = [];
 
-    payload.athleteName = currentLifter.name;
+    bottomBarPayload.athleteName = currentLifter.name;
 
     if (currentAttempt.liftName === 'squat') {
-      payload.isSquatActive = true;
-      payload.isBenchActive = false;
-      payload.isDeadliftActive = false;
+      bottomBarPayload.isSquatActive = true;
+      bottomBarPayload.isBenchActive = false;
+      bottomBarPayload.isDeadliftActive = false;
 
       compositionUpdates.push({
         subCompositionId: squatComposition.subCompositionId,
         payload: this.buildSquatPayload(currentLifter.lifts.squat),
       });
     } else if (currentAttempt.liftName === 'bench') {
-      payload.isSquatActive = false;
-      payload.isBenchActive = true;
-      payload.isDeadliftActive = false;
+      bottomBarPayload.isSquatActive = false;
+      bottomBarPayload.isBenchActive = true;
+      bottomBarPayload.isDeadliftActive = false;
 
       compositionUpdates.push({
         subCompositionId: benchComposition.subCompositionId,
@@ -96,9 +101,9 @@ export class MainScene {
         ),
       });
     } else {
-      payload.isSquatActive = false;
-      payload.isBenchActive = false;
-      payload.isDeadliftActive = true;
+      bottomBarPayload.isSquatActive = false;
+      bottomBarPayload.isBenchActive = false;
+      bottomBarPayload.isDeadliftActive = true;
 
       compositionUpdates.push({
         subCompositionId: deadliftComposition.subCompositionId,
@@ -111,27 +116,34 @@ export class MainScene {
     }
 
     if (currentAttempt.attemptNumber === 1) {
-      payload.attempt1Active = true;
-      payload.attempt2Active = false;
-      payload.attempt3Active = false;
+      bottomBarPayload.attempt1Active = true;
+      bottomBarPayload.attempt2Active = false;
+      bottomBarPayload.attempt3Active = false;
     } else if (currentAttempt.attemptNumber === 2) {
-      payload.attempt1Active = false;
-      payload.attempt2Active = true;
-      payload.attempt3Active = false;
+      bottomBarPayload.attempt1Active = false;
+      bottomBarPayload.attempt2Active = true;
+      bottomBarPayload.attempt3Active = false;
     } else if (currentAttempt.attemptNumber === 3) {
-      payload.attempt1Active = false;
-      payload.attempt2Active = false;
-      payload.attempt3Active = true;
+      bottomBarPayload.attempt1Active = false;
+      bottomBarPayload.attempt2Active = false;
+      bottomBarPayload.attempt3Active = true;
     } else {
-      payload.attempt1Active = false;
-      payload.attempt2Active = false;
-      payload.attempt3Active = false;
+      bottomBarPayload.attempt1Active = false;
+      bottomBarPayload.attempt2Active = false;
+      bottomBarPayload.attempt3Active = false;
     }
 
     compositionUpdates.push({
       subCompositionId: bottomBarComposition.subCompositionId,
-      payload: payload,
+      payload: bottomBarPayload,
     });
+
+    compositionUpdates.push({
+      subCompositionId: weightClassComposition.subCompositionId,
+      payload: { classTitle: divisionName },
+      state: 'In',
+    });
+
     await this.appControlService.updateControlAppContent(
       this.controlAppToken,
       compositionUpdates,
@@ -297,6 +309,10 @@ const bottomBarComposition = new Widget<BottomBarPayload>(
 
 const lightsComposition = new Widget<LightsPayload>(
   '0c44bb70-1af3-4f0d-bf06-dd0cf34b78bf',
+);
+
+const weightClassComposition = new Widget<WeightClassPayload>(
+  '6e18215a-f4f4-4dfa-88c1-ef0f17193d07',
 );
 
 const isValueNullOrEmptyString = (value: any) => {
