@@ -41,8 +41,13 @@ export class LiftingcastService {
       const benches = Object.values(lcLifter.lifts.bench);
       const deadlifts = Object.values(lcLifter.lifts.dead);
 
+      const divisions = lcLifter.divisions.filter(
+        (division) => division.divisionId,
+      );
+
       return {
         ...lcLifter,
+        divisions,
         lifts: {
           squat: squats,
           bench: benches,
