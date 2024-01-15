@@ -5,7 +5,7 @@ import { LiftingcastModule } from './liftingcast/liftingcast.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { SlliModule } from './slli/slli.module';
 import { SingularliveModule } from './singularlive/singularlive.module';
-import { LoggerMiddleware } from './liftingcast/common/middleware/logger.middleware';
+import { LoggerMiddleware } from './common/middleware/logger.middleware';
 
 @Module({
   imports: [
