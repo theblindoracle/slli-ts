@@ -1,5 +1,6 @@
 import {
   Attempt,
+  ClockState,
   Lift,
   Lifter,
   RefLightDecision,
@@ -11,6 +12,8 @@ import {
   DeadliftPayload,
   LightInfractionPayload,
   LightsPayload,
+  NextLiftersPayload,
+  ShortTimerPayload,
   SquatPayload,
   WeightClassPayload,
 } from './singularlive.payloads';
@@ -22,12 +25,24 @@ import {
 } from 'src/liftingcast/liftingcast.utils';
 import { colors } from './singularlive.constants';
 import { UpdateControlAppContentDTO } from './singularlive.dtos';
+import { Widget } from './singularlive.widgets';
 
 export class MainScene {
   constructor(
-    private readonly appControlService: SingularliveService,
+    private readonly singularliveService: SingularliveService,
     private controlAppToken: string,
-  ) {}
+  ) { }
+
+  async updateTimer(clockLength: number, clockState: ClockState) {
+    const content: UpdateControlAppContentDTO = {
+      subCompositionId: shortTimerComposition.subCompositionId,
+      payload: { isClockActive: clockState === 'started', clockLength },
+    };
+    this.singularliveService.updateControlAppContent(
+      this.controlAppToken,
+      content,
+    );
+  }
 
   async updateLights(refLights: RefLights) {
     const lightPayload: LightsPayload = {
@@ -63,7 +78,7 @@ export class MainScene {
       },
     ];
 
-    this.appControlService.updateControlAppContent(
+    this.singularliveService.updateControlAppContent(
       this.controlAppToken,
       compositionUpdates,
     );
@@ -73,6 +88,7 @@ export class MainScene {
     currentLifter: Lifter,
     currentAttempt: Attempt,
     divisionName: string,
+    nextLifters: string[],
   ) {
     const bottomBarPayload: Partial<BottomBarPayload> = {};
     const compositionUpdates: UpdateControlAppContentDTO[] = [];
@@ -144,7 +160,12 @@ export class MainScene {
       state: 'In',
     });
 
-    await this.appControlService.updateControlAppContent(
+    compositionUpdates.push({
+      subCompositionId: nextLiftersComposition.subCompositionId,
+      payload: { nextLifters: JSON.stringify(nextLifters) },
+    });
+
+    await this.singularliveService.updateControlAppContent(
       this.controlAppToken,
       compositionUpdates,
     );
@@ -282,16 +303,11 @@ export class MainScene {
   }
 }
 
-class Widget<TPayload> {
-  constructor(readonly subCompositionId: string) {}
-  payload: Partial<TPayload>;
-}
-
 const leftLightInfractionCompId = 'fc070e8a-bea1-4a76-a577-22f9f22307c6';
 const headLightInfractionCompId = '8af04dc1-f884-4a16-9ebf-2be05251e54c';
 const rightLightInfractionCompId = 'cf1e8966-98c6-7abb-9d03-f2beaccb92d4';
 
-export const squatComposition = new Widget<SquatPayload>(
+const squatComposition = new Widget<SquatPayload>(
   '9b768806-7fd1-43b1-a6e6-adf1a706972b',
 );
 
@@ -313,6 +329,14 @@ const lightsComposition = new Widget<LightsPayload>(
 
 const weightClassComposition = new Widget<WeightClassPayload>(
   '6e18215a-f4f4-4dfa-88c1-ef0f17193d07',
+);
+
+const shortTimerComposition = new Widget<ShortTimerPayload>(
+  'c465993c-6d75-40e7-3aee-3ecedaaccd66',
+);
+
+const nextLiftersComposition = new Widget<NextLiftersPayload>(
+  'ba7bd7e4-945a-2b6e-0a21-b4cae80ae234',
 );
 
 const isValueNullOrEmptyString = (value: any) => {

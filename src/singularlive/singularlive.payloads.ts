@@ -1,3 +1,5 @@
+import { ClockState } from 'src/liftingcast/liftingcast.enteties';
+
 export type BottomBarPayload = {
   logoType: string;
   athleteName: string;
@@ -62,11 +64,23 @@ export type WeightClassPayload = {
   classTitle: string;
 };
 
+export type ShortTimerPayload = {
+  isClockActive: boolean;
+  clockLength: number;
+};
+
+export type NextLiftersPayload = {
+  ad: string;
+  adSpotVisibility: boolean;
+  adImageShift: number;
+  numberBgColor: SingularColor;
+  nextLifters: string[];
+};
 type SingularColor =
   | {
-      r: number;
-      g: number;
-      b: number;
-      a: number;
-    }
+    r: number;
+    g: number;
+    b: number;
+    a: number;
+  }
   | string;
