@@ -1,9 +1,9 @@
-import { Controller, Patch, Post } from '@nestjs/common';
+import { Controller, Param, Patch, Post } from '@nestjs/common';
 import { SessionManagerService } from './slli.service';
 
 @Controller('slli')
 export class SlliController {
-  constructor(private readonly slliService: SessionManagerService) {}
+  constructor(private readonly slliService: SessionManagerService) { }
 
   @Post('pre-meet')
   preMeet() {
@@ -11,7 +11,12 @@ export class SlliController {
   }
 
   @Patch('startSession')
-  startSession() {
-    this.slliService.startSession('mqky3v477ua5', 'ppjiq0g8i70b', 'test');
+  startSession(
+    @Param('meetID') meetID: string,
+    @Param('platformID') platformID: string,
+    @Param('password') password: string,
+    @Param('token') token: string,
+  ) {
+    this.slliService.startSession(meetID, platformID, password, token);
   }
 }
