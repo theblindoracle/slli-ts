@@ -14,17 +14,12 @@ import { AxiosResponse, isAxiosError } from 'axios';
 @Injectable()
 export class LiftingcastService {
   private readonly logger = new Logger(LiftingcastService.name);
-  // private seqNumber = '0';
-  // private platformId = 'ppjiq0g8i70b';
-  // private meetId = 'mqky3v477ua5';
-  // private password = 'test';
-  // private isSessionActive = false;
   private abortController: AbortController = new AbortController();
 
   constructor(
     private liftingcastEndpoint: LiftingcastEndpoint,
     private eventEmitter: EventEmitter2,
-  ) {}
+  ) { }
 
   async getMeetData(meetId: string): Promise<MeetDocument> {
     const response = await firstValueFrom(
@@ -73,20 +68,15 @@ export class LiftingcastService {
     meetId: string,
     platformId: string,
     password: string,
+    sequenceNumber: string = '0',
   ) {
-    let seqNumber = '0';
-    let previousClockState: ClockState = 'initial';
-    let previousClockTimerLength: number;
-    let previousAttemptId: string;
-
-    // while (true) {
-    const response = await firstValueFrom(
+    return firstValueFrom(
       this.liftingcastEndpoint
         .getPlatformDocument(
           platformId,
           meetId,
           password,
-          seqNumber,
+          sequenceNumber,
           this.abortController,
         )
         .pipe(
@@ -104,57 +94,5 @@ export class LiftingcastService {
           }),
         ),
     );
-
-    if (response.status !== HttpStatus.OK) {
-      // break loop and retry call if call times out or is aborted
-      // continue;
-    }
-
-    const data = response.data;
-    seqNumber = data.last_seq;
-
-    const platformDoc = data.results.find(
-      (result) => result.doc._id === platformId,
-    )?.doc;
-    if (platformDoc) {
-      if (platformDoc.currentAttemptId !== previousAttemptId) {
-        this.eventEmitter.emit(
-          LiftingcastEvents.CurrentAttemptUpdated,
-          new CurrentAttemptUpdatedEvent({
-            meetId: meetId,
-            currentAttemptId: platformDoc.currentAttemptId,
-          }),
-        );
-      }
-
-      if (
-        platformDoc.clockState !== previousClockState ||
-        previousClockTimerLength !== platformDoc.clockTimerLength
-      ) {
-        this.eventEmitter.emit(
-          LiftingcastEvents.ClockStateChanged,
-          new ClockStateChangedEvent({
-            previousState: previousClockState,
-            currentState: platformDoc.clockState,
-            clockDuration: platformDoc.clockTimerLength,
-          }),
-        );
-
-        previousClockState = platformDoc.clockState;
-        previousClockTimerLength = platformDoc.clockTimerLength;
-      }
-    }
-
-    const lightDocs = data.results
-      .filter((res) => res.doc._id.startsWith('r'))
-      .map((res) => res.doc);
-
-    lightDocs.forEach((lightDoc) => {
-      this.eventEmitter.emit(
-        LiftingcastEvents.RefLightUpdatedEvent,
-        new RefLightUpdatedEvent({ payload: lightDoc }),
-      );
-    });
-    // }
   }
 }

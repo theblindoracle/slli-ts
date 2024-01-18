@@ -18,8 +18,9 @@ export class RefLightUpdatedEvent extends Event<RefLightUpdatedEvent> {
 }
 
 export class CurrentAttemptUpdatedEvent extends Event<CurrentAttemptUpdatedEvent> {
-  meetId: string;
-  currentAttemptId: string;
+  meetID: string;
+  platformID: string;
+  meetDocument: MeetDocument;
 }
 
 export class ClockStateChangedEvent extends Event<ClockStateChangedEvent> {

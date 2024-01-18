@@ -51,6 +51,7 @@ export class LiftingcastEndpoint {
 
   getMeet(meetId: string) {
     const url = `${this.apiBaseUrl}/meets/${meetId}`;
+
     return this.httpService.get(url).pipe(
       retry({
         count: 3,
