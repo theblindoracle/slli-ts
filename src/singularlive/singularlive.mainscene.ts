@@ -26,6 +26,11 @@ import {
 import { colors } from './singularlive.constants';
 import { UpdateControlAppContentDTO } from './singularlive.dtos';
 import { Widget } from './singularlive.widgets';
+import { OnEvent } from '@nestjs/event-emitter';
+import {
+  CurrentAttemptUpdatedEvent,
+  LiftingcastEvents,
+} from 'src/liftingcast/liftingcast.event';
 
 export class MainScene {
   constructor(
@@ -84,6 +89,40 @@ export class MainScene {
     );
   }
 
+  @OnEvent(LiftingcastEvents.CurrentAttemptUpdated)
+  onCurrentAttemptUpdated(event: CurrentAttemptUpdatedEvent) {
+    const meetDocument = event.meetDocument;
+    const platform = meetDocument.platforms.find(
+      (platform) => platform.id === event.platformID,
+    );
+
+    const currentLifter = meetDocument.lifters.find(
+      (lifter) => (lifter.id = platform.currentAttempt.lifter.id),
+    );
+
+    const division = meetDocument.divisions.find(
+      (division) => division.id === currentLifter.divisions[0].divisionId,
+    );
+
+    const weightClass = division.weightClasses.find(
+      (weightClass) =>
+        weightClass.id === currentLifter.divisions[0].weightClassId,
+    );
+
+    const nextLifters = platform.nextAttempts
+      .map((attempt) => attempt.lifter.id)
+      .map(
+        (lifterId) =>
+          meetDocument.lifters.find((lifter) => lifter.id === lifterId).name,
+      );
+
+    this.playAttemptChange(
+      currentLifter,
+      meetDocument.platforms[0].currentAttempt,
+      `${division.name} - ${weightClass.name}`,
+      nextLifters,
+    );
+  }
   async playAttemptChange(
     currentLifter: Lifter,
     currentAttempt: Attempt,
