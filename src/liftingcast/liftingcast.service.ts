@@ -1,14 +1,7 @@
-import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { catchError, firstValueFrom, of } from 'rxjs';
-import {
-  ClockStateChangedEvent,
-  CurrentAttemptUpdatedEvent,
-  LiftingcastEvents,
-  RefLightUpdatedEvent,
-} from './liftingcast.event';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { LiftingcastEndpoint } from './liftingcast.endpoint';
-import { ClockState, MeetDocument } from './liftingcast.enteties';
+import { MeetDocument } from './liftingcast.enteties';
 import { AxiosResponse, isAxiosError } from 'axios';
 
 @Injectable()
@@ -16,10 +9,7 @@ export class LiftingcastService {
   private readonly logger = new Logger(LiftingcastService.name);
   private abortController: AbortController = new AbortController();
 
-  constructor(
-    private liftingcastEndpoint: LiftingcastEndpoint,
-    private eventEmitter: EventEmitter2,
-  ) { }
+  constructor(private liftingcastEndpoint: LiftingcastEndpoint) {}
 
   async getMeetData(meetId: string): Promise<MeetDocument> {
     const response = await firstValueFrom(
