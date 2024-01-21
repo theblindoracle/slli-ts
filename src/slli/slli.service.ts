@@ -1,5 +1,5 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
+import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { ClockState } from 'src/liftingcast/liftingcast.enteties';
 import {
   ClockStateChangedEvent,
@@ -8,7 +8,8 @@ import {
   RefLightUpdatedEvent,
 } from 'src/liftingcast/liftingcast.event';
 import { LiftingcastService } from 'src/liftingcast/liftingcast.service';
-import { MainScene } from 'src/singularlive/singularlive.mainscene';
+import { MainScene } from 'src/singularlive/scenes/singularlive.mainscene';
+import { SceneManagerService } from 'src/singularlive/singularlive.scenemanager';
 import { SingularliveService } from 'src/singularlive/singularlive.service';
 
 @Injectable()
@@ -17,10 +18,11 @@ export class SessionManagerService {
     private readonly liftingcastService: LiftingcastService,
     private readonly singularService: SingularliveService,
     private readonly eventEmitter: EventEmitter2,
-  ) { }
+    private readonly sceneManager: SceneManagerService,
+  ) {}
   private readonly logger = new Logger(SessionManagerService.name);
 
-  private readonly sessions = Array<SessionDetails>();
+  sessions = new Array<SessionDetails>();
 
   async startSession(
     liftingcastMeetID: string,
@@ -37,9 +39,84 @@ export class SessionManagerService {
 
     this.sessions.push(session);
 
-    // the main scene needs to be instantiated to listen to events
-    const mainScene = new MainScene(
-      this.singularService,
+    this.eventEmitter.emit('slli.startSession', session);
+
+    // this.eventEmitter.on(
+    //   LiftingcastEvents.CurrentAttemptUpdated,
+    //   (e) => this.handleOnCurrentAttemptUpdated(e),
+    //   { async: true },
+    // );
+  }
+
+  // async handleOnCurrentAttemptUpdated(e: CurrentAttemptUpdatedEvent) {
+  //   this.logger.log(
+  //     LiftingcastEvents.CurrentAttemptUpdated,
+  //     e.platformID,
+  //     e.meetID,
+  //   );
+  //
+  //   const session = this.sessions.find(
+  //     (session) => session.liftingcastMeetID === e.meetID,
+  //   );
+  //
+  //   const mainScene = new MainScene(
+  //     this.singularService,
+  //     session.singularAppToken,
+  //   );
+  //
+  //   this.logger.log('Updating main scene');
+  //   const meetDocument = e.meetDocument;
+  //
+  //   const platform = meetDocument.platforms.find(
+  //     (platform) => platform.id === e.platformID,
+  //   );
+  //
+  //   const currentLifter = meetDocument.lifters.find(
+  //     (lifter) => (lifter.id = platform.currentAttempt.lifter.id),
+  //   );
+  //
+  //   const division = meetDocument.divisions.find(
+  //     (division) => division.id === currentLifter.divisions[0].divisionId,
+  //   );
+  //
+  //   const weightClass = division.weightClasses.find(
+  //     (weightClass) =>
+  //       weightClass.id === currentLifter.divisions[0].weightClassId,
+  //   );
+  //
+  //   const nextLifters = platform.nextAttempts
+  //     .map((attempt) => attempt.lifter.id)
+  //     .map(
+  //       (lifterId) =>
+  //         meetDocument.lifters.find((lifter) => lifter.id === lifterId).name,
+  //     );
+  //
+  //   this.logger.debug(currentLifter.name);
+  //
+  //   await mainScene.playAttemptChange(
+  //     currentLifter,
+  //     platform.currentAttempt,
+  //     `${division.name} - ${weightClass.name}`,
+  //     nextLifters,
+  //   );
+  // }
+
+  @OnEvent(LiftingcastEvents.ClockStateChanged)
+  onClockStateChanged(e: ClockStateChangedEvent) {
+    this.logger.log(
+      LiftingcastEvents.ClockStateChanged,
+      e.currentState,
+      e.previousState,
+      e.clockDuration,
+    );
+  }
+
+  @OnEvent('slli.startSession', { async: true })
+  async startPoll(session: SessionDetails) {
+    //this need to move. It should part of the factory process
+    this.sceneManager.createMainScene(
+      session.liftingcastMeetID,
+      session.liftingcastPlatformID,
       session.singularAppToken,
     );
 
@@ -47,9 +124,10 @@ export class SessionManagerService {
     let previousClockState: ClockState = 'initial';
     let previousClockTimerLength: number;
     let previousAttemptId: string;
+    let lastUpdate = Date.now();
 
-    const processDocumentChanges = async () => {
-      this.logger.log('starting poll process');
+    this.logger.log('starting poll process');
+    while (Date.now() - lastUpdate < 1000 * 60 * 2) {
       const response = await this.liftingcastService.listenForDocumentChanges(
         session.liftingcastMeetID,
         session.liftingcastPlatformID,
@@ -57,23 +135,18 @@ export class SessionManagerService {
         seqNumber,
       );
 
-      this.logger.log(
-        'sessionDetails',
-        session.liftingcastMeetID,
-        session.liftingcastPlatformID,
-        session.liftingcastPassword,
-        seqNumber,
-      );
-
       if (response.status !== HttpStatus.OK) {
-        this.logger.error(response.status);
-        this.logger.error(response.statusText);
-        this.logger.error(response.data);
-        return;
+        this.logger.error('listenForDocumentChanges failed');
+        this.logger.error('restarting poll');
+        continue;
       }
 
       const data = response.data;
-      seqNumber = data.last_seq;
+
+      if (seqNumber !== data.last_seq) {
+        seqNumber = data.last_seq;
+        lastUpdate = Date.now();
+      }
 
       const platformDoc = data.results.find(
         (result) => result.doc._id === session.liftingcastPlatformID,
@@ -122,11 +195,8 @@ export class SessionManagerService {
           new RefLightUpdatedEvent({ payload: lightDoc }),
         );
       });
-    };
-
-    while (true) {
-      await processDocumentChanges();
     }
+    this.logger.log('stopping poll process');
   }
 }
 
@@ -136,7 +206,3 @@ type SessionDetails = {
   liftingcastPassword: string;
   singularAppToken: string;
 };
-
-class SlliSession {
-  constructor(private readonly sessionDetails: SessionDetails) { }
-}
