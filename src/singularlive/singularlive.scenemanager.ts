@@ -1,36 +1,64 @@
-import { Injectable } from '@nestjs/common';
-import { Scene } from './scenes/singularlive.scene';
+import { Injectable, Logger } from '@nestjs/common';
 import { MainScene } from './scenes/singularlive.mainscene';
 import { SingularliveService } from './singularlive.service';
 import {
+  ClockStateChangedEvent,
   CurrentAttemptUpdatedEvent,
   LiftingcastEvents,
+  RefLightUpdatedEvent,
 } from 'src/liftingcast/liftingcast.event';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class SceneManagerService {
+  private readonly logger = new Logger(SceneManagerService.name);
   constructor(
     private readonly singularliveService: SingularliveService,
     private readonly eventEmmiter: EventEmitter2,
   ) {}
+
   private readonly scenes = new Array<MainScene>();
 
-  addScene(controlAppToken: string, meetID: string, platformID: string) {
+  async addScene(controlAppToken: string, meetID: string, platformID: string) {
     const mainScene = this.createMainScene(controlAppToken, meetID, platformID);
 
     this.scenes.push(mainScene);
   }
 
   createMainScene(controlAppToken: string, meetID: string, platformID: string) {
-    const mainScene = new MainScene().init(controlAppToken, meetID, platformID);
+    const mainScene = new MainScene(this.singularliveService).init(
+      controlAppToken,
+      meetID,
+      platformID,
+    );
 
+    this.eventEmmiter.on(
+      LiftingcastEvents.CurrentAttemptUpdated,
+      (event: CurrentAttemptUpdatedEvent) => {
+        mainScene.onCurrentAttemptUpdated(event);
+      },
+    );
+
+    this.eventEmmiter.on(
+      LiftingcastEvents.ClockStateChanged,
+      (e: ClockStateChangedEvent) => {
+        mainScene.onClockStateChanged(e);
+      },
+    );
+
+    this.eventEmmiter.on(
+      LiftingcastEvents.RefLightUpdatedEvent,
+      (e: RefLightUpdatedEvent) => {
+        // if (e.platformID !== platformID) {
+        //   this.logger.warn(
+        //     `${e.platformID} does not equal ${mainScene.platformID}`,
+        //   );
+        //   return;
+        // }
+
+        mainScene.onRefLightsUpdated(e);
+      },
+    );
     return mainScene;
   }
-
-  // handleOnCurrentAttemptUpdated(e: CurrentAttemptUpdatedEvent) {
-  //   const platfromScenes = this.scenes.filter(
-  //     (scene) => scene.meetID === e.meetID && scene.platformID === e.meetID,
-  //   );
-  // }
 }

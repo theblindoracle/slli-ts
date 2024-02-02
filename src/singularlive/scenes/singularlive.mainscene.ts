@@ -1,106 +1,128 @@
 import {
   Attempt,
   ClockState,
-  Lift,
   Lifter,
-  RefLightDecision,
   RefLights,
 } from 'src/liftingcast/liftingcast.enteties';
-import {
-  BenchPayload,
-  BottomBarPayload,
-  DeadliftPayload,
-  LightInfractionPayload,
-  LightsPayload,
-  NextLiftersPayload,
-  ShortTimerPayload,
-  SquatPayload,
-  WeightClassPayload,
-} from '../singularlive.payloads';
 import { SingularliveService } from '../singularlive.service';
-import {
-  getBestLiftWeight,
-  isLiftGood,
-  isRefDecisionGood,
-} from 'src/liftingcast/liftingcast.utils';
+import { getBestLiftWeight } from 'src/liftingcast/liftingcast.utils';
 import { UpdateControlAppContentDTO } from '../singularlive.dtos';
-import { Widget } from '../singularlive.widgets';
-import { Inject, Injectable, Logger } from '@nestjs/common';
-import { Scene } from './singularlive.scene';
-import { colors } from '../singularlive.constants';
-import { EventEmitter2 } from '@nestjs/event-emitter';
+import { Logger } from '@nestjs/common';
 import {
+  ClockStateChangedEvent,
   CurrentAttemptUpdatedEvent,
-  LiftingcastEvents,
+  RefLightUpdatedEvent,
 } from 'src/liftingcast/liftingcast.event';
+import { MainAthleteBottomBar } from '../compositions/mainAthleteBottomBar';
+import { LightInfractionPayload, LightsComp } from '../compositions/lights';
+import { ShortTimerComp } from '../compositions/shortTimer';
+import { NextLiftersComp } from '../compositions/nextLifters';
+import { WeightClassComp } from '../compositions/weightClass';
+import { delay } from '../singularlive.utils';
+import {
+  SecondAttemptStingerComp,
+  ThirdAttemptStingerComp,
+} from '../compositions/attemptStinger';
 
-@Injectable()
 export class MainScene {
   private readonly logger = new Logger(MainScene.name);
-  @Inject(SingularliveService)
-  private readonly singularliveService: SingularliveService;
-  @Inject(EventEmitter2)
-  private readonly eventEmitter: EventEmitter2;
 
-  private meetID: string;
-  private platformID: string;
+  constructor(private readonly singularliveService: SingularliveService) {}
+
+  meetID: string;
+  platformID: string;
   private controlAppToken: string;
 
+  private readonly mainAthleteBottomBarComp = new MainAthleteBottomBar();
+  private readonly lightsComp = new LightsComp();
+  private readonly shortTimerComp = new ShortTimerComp();
+  private readonly nextLiftersComp = new NextLiftersComp();
+  private readonly weightClassComp = new WeightClassComp();
+  private readonly secondAttemptStingerComp = new SecondAttemptStingerComp();
+  private readonly thirdAttemptStingerComp = new ThirdAttemptStingerComp();
+
   init(meetID: string, platformID: string, controlAppToken: string) {
-    this.logger.log(this.eventEmitter);
-
-    this.logger.log(this.singularliveService);
-
     this.meetID = meetID;
     this.platformID = platformID;
     this.controlAppToken = controlAppToken;
-    this.eventEmitter.on(LiftingcastEvents.CurrentAttemptUpdated, (e) =>
-      this.onCurrentAttemptUpdated(e),
-    );
     return this;
   }
 
+  async onClockStateChanged(e: ClockStateChangedEvent) {
+    const { currentState, clockDuration } = e;
+    await this.updateTimer(clockDuration / 1000, currentState as ClockState);
+  }
+
   async updateTimer(clockLength: number, clockState: ClockState) {
+    const payload = this.shortTimerComp.buildPayload(clockState, clockLength);
+
     const content: UpdateControlAppContentDTO = {
-      subCompositionId: shortTimerComposition.subCompositionId,
-      payload: { isClockActive: clockState === 'started', clockLength },
+      subCompositionId: this.shortTimerComp.shortTimerCompID,
+      payload: payload,
     };
+
+    this.logger.debug(`ClockPayload`, payload);
+
     this.singularliveService.updateControlAppContent(
       this.controlAppToken,
       content,
     );
   }
 
-  async updateLights(refLights: RefLights) {
-    const lightPayload: LightsPayload = {
-      leftJudgeDecision: isRefDecisionGood(refLights.left.decision),
-      headJudgeDecision: isRefDecisionGood(refLights.head.decision),
-      rightJudgeDecision: isRefDecisionGood(refLights.right.decision),
-      lastUpdate: new Date(),
-    };
+  private initialLights: RefLights = {
+    left: { decision: null },
+    head: { decision: null },
+    right: { decision: null },
+  };
 
+  lightState: RefLights = this.initialLights;
+
+  async onRefLightsUpdated(e: RefLightUpdatedEvent) {
+    if (e.position === 'left') {
+      this.lightState.left.decision = e.decision;
+      this.lightState.left.cards = e.cards;
+    } else if (e.position === 'head') {
+      this.lightState.head.decision = e.decision;
+      this.lightState.head.cards = e.cards;
+    } else if (e.position === 'right') {
+      this.lightState.right.decision = e.decision;
+      this.lightState.right.cards = e.cards;
+    }
+
+    if (
+      this.lightState.head.decision &&
+      this.lightState.left.decision &&
+      this.lightState.right.decision
+    ) {
+      await this.updateLights(this.lightState);
+    }
+
+    this.lightState = this.initialLights;
+  }
+
+  async updateLights(refLights: RefLights) {
     const leftInfractionBarPayload: LightInfractionPayload =
-      this.buildLightInfractionPayload(refLights.left);
+      this.lightsComp.buildLightInfractionPayload(refLights.left);
     const rightInfractionBarPayload: LightInfractionPayload =
-      this.buildLightInfractionPayload(refLights.right);
+      this.lightsComp.buildLightInfractionPayload(refLights.right);
     const headInfractionBarPayload: LightInfractionPayload =
-      this.buildLightInfractionPayload(refLights.head);
+      this.lightsComp.buildLightInfractionPayload(refLights.head);
 
     const compositionUpdates: UpdateControlAppContentDTO[] = [
       {
-        subCompositionId: lightsComposition.subCompositionId,
-        payload: lightPayload,
+        subCompositionId: this.lightsComp.lightsCompID,
+        payload: this.lightsComp.buildLightsPayload(refLights),
       },
       {
-        subCompositionId: leftLightInfractionCompId,
+        subCompositionId: this.lightsComp.leftLightInfractionCompId,
         payload: leftInfractionBarPayload,
       },
       {
-        subCompositionId: rightLightInfractionCompId,
+        subCompositionId: this.lightsComp.rightLightInfractionCompId,
         payload: rightInfractionBarPayload,
       },
       {
-        subCompositionId: headLightInfractionCompId,
+        subCompositionId: this.lightsComp.headLightInfractionCompId,
         payload: headInfractionBarPayload,
       },
     ];
@@ -124,8 +146,15 @@ export class MainScene {
       (platform) => platform.id === event.platformID,
     );
 
+    if (!platform.currentAttempt) {
+      this.logger.warn(
+        `currentAttempt is null ${this.meetID + ':' + this.platformID}`,
+      );
+      return;
+    }
+
     const currentLifter = meetDocument.lifters.find(
-      (lifter) => (lifter.id = platform.currentAttempt.lifter.id),
+      (lifter) => lifter.id === platform.currentAttempt.lifter.id,
     );
 
     const division = meetDocument.divisions.find(
@@ -147,10 +176,13 @@ export class MainScene {
     await this.playAttemptChange(
       currentLifter,
       meetDocument.platforms[0].currentAttempt,
-      `${division.name} - ${weightClass.name}`,
+      `${division.name} - ${weightClass.name} `,
       nextLifters,
     );
   }
+
+  private nextLifterCounter = 3;
+  private previousAttemptNumber = 0;
 
   async playAttemptChange(
     currentLifter: Lifter,
@@ -158,40 +190,28 @@ export class MainScene {
     divisionName: string,
     nextLifters: string[],
   ) {
-    const bottomBarPayload: Partial<BottomBarPayload> = {};
-    const compositionUpdates: UpdateControlAppContentDTO[] = [];
-
-    bottomBarPayload.athleteName = currentLifter.name;
+    const phase1Updates: UpdateControlAppContentDTO[] = [];
+    const phase2Updates: UpdateControlAppContentDTO[] = [];
 
     if (currentAttempt.liftName === 'squat') {
-      bottomBarPayload.isSquatActive = true;
-      bottomBarPayload.isBenchActive = false;
-      bottomBarPayload.isDeadliftActive = false;
-
-      compositionUpdates.push({
-        subCompositionId: squatComposition.subCompositionId,
-        payload: this.buildSquatPayload(currentLifter.lifts.squat),
+      phase1Updates.push({
+        subCompositionId: this.mainAthleteBottomBarComp.squatCompID,
+        payload: this.mainAthleteBottomBarComp.buildSquatPayload(
+          currentLifter.lifts.squat,
+        ),
       });
     } else if (currentAttempt.liftName === 'bench') {
-      bottomBarPayload.isSquatActive = false;
-      bottomBarPayload.isBenchActive = true;
-      bottomBarPayload.isDeadliftActive = false;
-
-      compositionUpdates.push({
-        subCompositionId: benchComposition.subCompositionId,
-        payload: this.buildBenchPayload(
+      phase1Updates.push({
+        subCompositionId: this.mainAthleteBottomBarComp.benchCompID,
+        payload: this.mainAthleteBottomBarComp.buildBenchPayload(
           currentLifter.lifts.bench,
           getBestLiftWeight(currentLifter.lifts.squat),
         ),
       });
     } else {
-      bottomBarPayload.isSquatActive = false;
-      bottomBarPayload.isBenchActive = false;
-      bottomBarPayload.isDeadliftActive = true;
-
-      compositionUpdates.push({
-        subCompositionId: deadliftComposition.subCompositionId,
-        payload: this.buildDeadliftPayload(
+      phase1Updates.push({
+        subCompositionId: this.mainAthleteBottomBarComp.deadliftCompID,
+        payload: this.mainAthleteBottomBarComp.buildDeadliftPayload(
           currentLifter.lifts.deadlift,
           getBestLiftWeight(currentLifter.lifts.squat),
           getBestLiftWeight(currentLifter.lifts.bench),
@@ -199,228 +219,77 @@ export class MainScene {
       });
     }
 
-    if (currentAttempt.attemptNumber === 1) {
-      bottomBarPayload.attempt1Active = true;
-      bottomBarPayload.attempt2Active = false;
-      bottomBarPayload.attempt3Active = false;
-    } else if (currentAttempt.attemptNumber === 2) {
-      bottomBarPayload.attempt1Active = false;
-      bottomBarPayload.attempt2Active = true;
-      bottomBarPayload.attempt3Active = false;
-    } else if (currentAttempt.attemptNumber === 3) {
-      bottomBarPayload.attempt1Active = false;
-      bottomBarPayload.attempt2Active = false;
-      bottomBarPayload.attempt3Active = true;
-    } else {
-      bottomBarPayload.attempt1Active = false;
-      bottomBarPayload.attempt2Active = false;
-      bottomBarPayload.attempt3Active = false;
-    }
-
-    compositionUpdates.push({
-      subCompositionId: bottomBarComposition.subCompositionId,
-      payload: bottomBarPayload,
+    phase1Updates.push({
+      subCompositionId:
+        this.mainAthleteBottomBarComp.mainAthleteBottomBarCompID,
+      payload: this.mainAthleteBottomBarComp.buildMainAtleteBottomBarPayload(
+        currentLifter,
+        currentAttempt,
+      ),
     });
-
-    compositionUpdates.push({
-      subCompositionId: weightClassComposition.subCompositionId,
+    phase1Updates.push({
+      subCompositionId: this.weightClassComp.compID,
       payload: { classTitle: divisionName },
       state: 'In',
     });
 
-    compositionUpdates.push({
-      subCompositionId: nextLiftersComposition.subCompositionId,
-      payload: { nextLifters: JSON.stringify(nextLifters) },
+    phase2Updates.push({
+      subCompositionId: this.weightClassComp.compID,
+      state: 'Out',
     });
+
+    if (this.nextLifterCounter === 3) {
+      phase1Updates.push({
+        subCompositionId: this.nextLiftersComp.compID,
+        payload: this.nextLiftersComp.buildPayload(nextLifters),
+        state: 'In',
+      });
+
+      this.nextLifterCounter = 0;
+
+      phase2Updates.push({
+        subCompositionId: this.nextLiftersComp.compID,
+        state: 'Out',
+      });
+    }
+    this.nextLifterCounter++;
+
+    if (this.previousAttemptNumber !== currentAttempt.attemptNumber) {
+      if (currentAttempt.attemptNumber === 2) {
+        phase1Updates.push({
+          subCompositionId: this.secondAttemptStingerComp.compID,
+          state: 'In',
+        });
+        phase2Updates.push({
+          subCompositionId: this.secondAttemptStingerComp.compID,
+          state: 'Out',
+        });
+      }
+
+      if (currentAttempt.attemptNumber === 3) {
+        phase1Updates.push({
+          subCompositionId: this.thirdAttemptStingerComp.compID,
+          state: 'In',
+        });
+        phase2Updates.push({
+          subCompositionId: this.thirdAttemptStingerComp.compID,
+          state: 'Out',
+        });
+      }
+
+      this.previousAttemptNumber = currentAttempt.attemptNumber;
+    }
 
     await this.singularliveService.updateControlAppContent(
       this.controlAppToken,
-      compositionUpdates,
+      phase1Updates,
+    );
+
+    await delay(3000);
+
+    await this.singularliveService.updateControlAppContent(
+      this.controlAppToken,
+      phase2Updates,
     );
   }
-
-  buildSquatPayload = (attempts: Lift[]) => {
-    const payload: SquatPayload = {
-      squat1: '-',
-      squat1Color: colors.mainOverlays.lift.future,
-      squat2: '-',
-      squat2Color: colors.mainOverlays.lift.future,
-      squat3: '-',
-      squat3Color: colors.mainOverlays.lift.future,
-    };
-
-    if (!isValueNullOrEmptyString(attempts[0].weight)) {
-      payload.squat1 = attempts[0].weight;
-    }
-    payload.squat1Color = getLiftTextColor(attempts[0]);
-
-    if (!isValueNullOrEmptyString(attempts[1].weight)) {
-      payload.squat2 = attempts[1].weight;
-    }
-    payload.squat2Color = getLiftTextColor(attempts[1]);
-
-    if (!isValueNullOrEmptyString(attempts[2].weight)) {
-      payload.squat3 = attempts[2].weight;
-    }
-    payload.squat3Color = getLiftTextColor(attempts[2]);
-
-    return payload;
-  };
-
-  buildBenchPayload = (benchLifts: Lift[], bestSquatWeight: number) => {
-    const payload: BenchPayload = {
-      bestSquat: '-',
-      bench1: '-',
-      bench1Color: colors.mainOverlays.lift.future,
-      bench2: '-',
-      bench2Color: colors.mainOverlays.lift.future,
-      bench3: '-',
-      bench3Color: colors.mainOverlays.lift.future,
-    };
-
-    payload.bestSquat = bestSquatWeight;
-
-    if (!isValueNullOrEmptyString(benchLifts[0].weight)) {
-      payload.bench1 = benchLifts[0].weight;
-    }
-    payload.bench1Color = getLiftTextColor(benchLifts[0]);
-
-    if (!isValueNullOrEmptyString(benchLifts[1].weight)) {
-      payload.bench2 = benchLifts[1].weight;
-    }
-    payload.bench2Color = getLiftTextColor(benchLifts[1]);
-
-    if (!isValueNullOrEmptyString(benchLifts[2].weight)) {
-      payload.bench3 = benchLifts[2].weight;
-    }
-    payload.bench3Color = getLiftTextColor(benchLifts[2]);
-
-    return payload;
-  };
-
-  buildDeadliftPayload = (
-    deadliftLifts: Lift[],
-    bestSquatWeight: number,
-    bestBenchWeight: number,
-  ) => {
-    const payload: DeadliftPayload = {
-      bestSquat: '-',
-      bestBench: '-',
-      deadlift1: '-',
-      deadlift1Color: colors.mainOverlays.lift.future,
-      deadlift2: '-',
-      deadlift2Color: colors.mainOverlays.lift.future,
-      deadlift3: '-',
-      deadlift3Color: colors.mainOverlays.lift.future,
-    };
-
-    payload.bestSquat = bestSquatWeight;
-    payload.bestBench = bestBenchWeight;
-
-    if (!isValueNullOrEmptyString(deadliftLifts[0].weight)) {
-      payload.deadlift1 = deadliftLifts[0].weight;
-    }
-    payload.deadlift1Color = getLiftTextColor(deadliftLifts[0]);
-
-    if (!isValueNullOrEmptyString(deadliftLifts[1].weight)) {
-      payload.deadlift2 = deadliftLifts[1].weight;
-    }
-    payload.deadlift2Color = getLiftTextColor(deadliftLifts[1]);
-
-    if (!isValueNullOrEmptyString(deadliftLifts[2].weight)) {
-      payload.deadlift3 = deadliftLifts[2].weight;
-    }
-    payload.deadlift3Color = getLiftTextColor(deadliftLifts[2]);
-
-    return payload;
-  };
-
-  buildLightInfractionPayload(refLightState: RefLightDecision) {
-    const payload = {
-      infractionFullBarColor: colors.liftInfactions.noInfaction,
-      infractionBarRightColor: colors.liftInfactions.noInfaction,
-      infractionBarLeftColor: colors.liftInfactions.noInfaction,
-    };
-
-    if (
-      isRefDecisionGood(refLightState.decision) ||
-      refLightState.cards === null
-    ) {
-      return payload;
-    }
-    if (refLightState.cards) {
-      const infractionColors = [];
-      if (refLightState.cards.red) {
-        infractionColors.push(colors.liftInfactions.red);
-      }
-      if (!!refLightState.cards.blue) {
-        infractionColors.push(colors.liftInfactions.blue);
-      }
-      if (!!refLightState.cards.yellow) {
-        infractionColors.push(colors.liftInfactions.yellow);
-      }
-      if (infractionColors.length === 1) {
-        payload.infractionFullBarColor = infractionColors.pop();
-      } else if (infractionColors.length === 2) {
-        payload.infractionBarRightColor = infractionColors.pop();
-        payload.infractionBarLeftColor = infractionColors.pop();
-      }
-    }
-
-    return payload;
-  }
 }
-
-const leftLightInfractionCompId = 'fc070e8a-bea1-4a76-a577-22f9f22307c6';
-const headLightInfractionCompId = '8af04dc1-f884-4a16-9ebf-2be05251e54c';
-const rightLightInfractionCompId = 'cf1e8966-98c6-7abb-9d03-f2beaccb92d4';
-
-const squatComposition = new Widget<SquatPayload>(
-  '9b768806-7fd1-43b1-a6e6-adf1a706972b',
-);
-
-const benchComposition = new Widget<BenchPayload>(
-  '117d6e66-ec38-4214-bf03-5af1e34afe17',
-);
-
-const deadliftComposition = new Widget<DeadliftPayload>(
-  'b9b21c1e-5c7a-47e3-b524-271aa4318f91',
-);
-
-const bottomBarComposition = new Widget<BottomBarPayload>(
-  '4b8a60fe-8f18-46f5-b829-0601f4a6a4d8',
-);
-
-const lightsComposition = new Widget<LightsPayload>(
-  '0c44bb70-1af3-4f0d-bf06-dd0cf34b78bf',
-);
-
-const weightClassComposition = new Widget<WeightClassPayload>(
-  '6e18215a-f4f4-4dfa-88c1-ef0f17193d07',
-);
-
-const shortTimerComposition = new Widget<ShortTimerPayload>(
-  'c465993c-6d75-40e7-3aee-3ecedaaccd66',
-);
-
-const nextLiftersComposition = new Widget<NextLiftersPayload>(
-  'ba7bd7e4-945a-2b6e-0a21-b4cae80ae234',
-);
-
-const isValueNullOrEmptyString = (value: any) => {
-  return value === null || value === undefined || value === '';
-};
-
-const getLiftTextColor = (lift: Lift) => {
-  if (!lift.weight && !lift.result) {
-    return colors.mainOverlays.lift.future;
-  }
-  if (lift.weight && !lift.result) {
-    return colors.mainOverlays.lift.current;
-  }
-  if (isLiftGood(lift)) {
-    return colors.mainOverlays.lift.good;
-  } else {
-    return colors.mainOverlays.lift.bad;
-  }
-};
