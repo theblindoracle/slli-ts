@@ -16,21 +16,21 @@ export class LiftingcastEventListeners {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  @OnEvent(LiftingcastEvents.CurrentAttemptUpdated, { async: true })
-  async handleCurrentAttemptUpdated(event: CurrentAttemptUpdatedEvent) {
-    this.logger.log(LiftingcastEvents.CurrentAttemptUpdated);
-    this.logger.log(`${event.meetID}:${event.platformID}`);
+  // @OnEvent(LiftingcastEvents.CurrentAttemptUpdated, { async: true })
+  // async handleCurrentAttemptUpdated(event: CurrentAttemptUpdatedEvent) {
+  //   this.logger.log(LiftingcastEvents.CurrentAttemptUpdated);
+  //   this.logger.log(`${event.meetID}:${event.platformID}`);
+  //
+  //   const response = await this.liftingcastService.getMeetData(event.meetID);
+  //
+  //   this.eventEmitter.emit(
+  //     LiftingcastEvents.MeetDocumentUpdated,
+  //     new MeetDocumentUpdatedEvent({ meetDocument: response }),
+  //   );
+  // }
 
-    const response = await this.liftingcastService.getMeetData(event.meetID);
-
-    this.eventEmitter.emit(
-      LiftingcastEvents.MeetDocumentUpdated,
-      new MeetDocumentUpdatedEvent({ meetDocument: response }),
-    );
-  }
-
-  @OnEvent(LiftingcastEvents.MeetDocumentUpdated)
-  handleMeetDecumentUpdatedListener(event: MeetDocumentUpdatedEvent) {
-    this.logger.log(LiftingcastEvents.MeetDocumentUpdated);
-  }
+  // @OnEvent(LiftingcastEvents.MeetDocumentUpdated)
+  // handleMeetDecumentUpdatedListener(event: MeetDocumentUpdatedEvent) {
+  //   this.logger.log(LiftingcastEvents.MeetDocumentUpdated);
+  // }
 }

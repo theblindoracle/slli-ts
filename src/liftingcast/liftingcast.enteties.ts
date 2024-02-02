@@ -27,6 +27,15 @@ export class RefDecisionCards {
   yellow?: boolean;
 }
 
+export type LightDoc = {
+  _id: string;
+  _rev: string;
+  platformId: string;
+  position: string;
+  decision: RefDecision;
+  cards: RefDecisionCards;
+};
+
 export class Lifter {
   id: string;
   name: string;
@@ -74,7 +83,7 @@ export class Platform {
   id: string;
   name: string;
   barAndCollarWeight: number;
-  currentAttempt: Attempt;
+  currentAttempt?: Attempt;
   nextAttempts: Attempt[];
 }
 

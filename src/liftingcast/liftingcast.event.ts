@@ -1,4 +1,8 @@
-import { MeetDocument } from './liftingcast.enteties';
+import {
+  MeetDocument,
+  RefDecision,
+  RefDecisionCards,
+} from './liftingcast.enteties';
 
 class Event<Type> {
   constructor(init?: Partial<Type>) {
@@ -14,7 +18,10 @@ export enum LiftingcastEvents {
 }
 
 export class RefLightUpdatedEvent extends Event<RefLightUpdatedEvent> {
-  payload: {};
+  platformID: string;
+  position: string;
+  decision: RefDecision;
+  cards: RefDecisionCards;
 }
 
 export class CurrentAttemptUpdatedEvent extends Event<CurrentAttemptUpdatedEvent> {
