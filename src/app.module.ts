@@ -6,13 +6,23 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { SlliModule } from './slli/slli.module';
 import { SingularliveModule } from './singularlive/singularlive.module';
 import { LoggerMiddleware } from './common/middleware/logger.middleware';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { RecordsModule } from './records/records.module';
+import { Record } from './records/records.entity';
 
 @Module({
   imports: [
+    TypeOrmModule.forRoot({
+      type: 'sqlite',
+      database: 'db/db',
+      synchronize: true,
+      entities: [Record],
+    }),
     EventEmitterModule.forRoot(),
     LiftingcastModule,
     SlliModule,
     SingularliveModule,
+    RecordsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
