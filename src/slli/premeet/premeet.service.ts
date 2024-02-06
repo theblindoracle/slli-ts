@@ -1,15 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { MeetDocument } from 'src/liftingcast/liftingcast.enteties';
 import { LiftingcastService } from 'src/liftingcast/liftingcast.service';
-import { UsaplDbService } from 'src/usapl/usapldb.service';
 import { AgeGroup, EquipmentLevel, Gender } from '../slli.enteties';
+import { UsaplService } from 'src/usapl/usapl.service';
 
 @Injectable()
 export class SlliPreMeetService {
   constructor(
     private readonly liftingcastService: LiftingcastService,
-    private readonly usaplDbService: UsaplDbService,
-  ) {}
+    private readonly usaplDbService: UsaplService,
+  ) { }
 
   async generatePreMeetReport() {
     // get roster and their divisions from liftingcast

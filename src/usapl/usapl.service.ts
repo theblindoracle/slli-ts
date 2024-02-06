@@ -1,12 +1,7 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { firstValueFrom } from 'rxjs';
-import {
-  WeightClass,
-  Division,
-  RankingEntry,
-  Record,
-} from './usapldb.enteties';
+import { WeightClass, Division, RankingEntry, Record } from './usapl.enteties';
 import {
   DisciplineOptions,
   DivisionOptions,
@@ -18,9 +13,9 @@ import {
 } from './usapl.dtos';
 
 @Injectable()
-export class UsaplDbService {
+export class UsaplService {
   private usaplDbBaseUrl = 'https://usapl.liftingdatabase.com/api';
-  constructor(private readonly httpService: HttpService) {}
+  constructor(private readonly httpService: HttpService) { }
 
   async getDivisions() {
     const url = `${this.usaplDbBaseUrl}/divisions`;
@@ -41,33 +36,38 @@ export class UsaplDbService {
     return data;
   }
 
-  async getRecords(
-    equipmentLevel?: EquipmentLevelOptions,
-    recordLevel?: RecordLevelOptions,
-    division?: DivisionOptions,
-    weightClass?: string,
-    sex?: SexOptions,
-    state?: USStates,
-  ) {
+  async getRecords(getRecordsDTO?: Partial<GetRecordsDTO>) {
     const url = `${this.usaplDbBaseUrl}/records`;
     const queryParameters = new URLSearchParams();
-    if (equipmentLevel !== undefined && equipmentLevel !== null) {
-      queryParameters.append('equipmentLevel', equipmentLevel);
+    if (
+      getRecordsDTO.equipmentLevel !== undefined &&
+      getRecordsDTO.equipmentLevel !== null
+    ) {
+      queryParameters.append('equipmentLevel', getRecordsDTO.equipmentLevel);
     }
-    if (recordLevel !== undefined && recordLevel !== null) {
-      queryParameters.append('recordLevel', recordLevel);
+    if (
+      getRecordsDTO.recordLevel !== undefined &&
+      getRecordsDTO.recordLevel !== null
+    ) {
+      queryParameters.append('recordLevel', getRecordsDTO.recordLevel);
     }
-    if (division !== undefined && division !== null) {
-      queryParameters.append('division', division);
+    if (
+      getRecordsDTO.division !== undefined &&
+      getRecordsDTO.division !== null
+    ) {
+      queryParameters.append('division', getRecordsDTO.division);
     }
-    if (weightClass !== undefined && weightClass !== null) {
-      queryParameters.append('weightClass', weightClass);
+    if (
+      getRecordsDTO.weightClass !== undefined &&
+      getRecordsDTO.weightClass !== null
+    ) {
+      queryParameters.append('weightClass', getRecordsDTO.weightClass);
     }
-    if (sex !== undefined && sex !== null) {
-      queryParameters.append('sex', sex);
+    if (getRecordsDTO.sex !== undefined && getRecordsDTO.sex !== null) {
+      queryParameters.append('sex', getRecordsDTO.sex);
     }
-    if (state !== undefined && state !== null) {
-      queryParameters.append('state', state);
+    if (getRecordsDTO.state !== undefined && getRecordsDTO.state !== null) {
+      queryParameters.append('state', getRecordsDTO.state);
     }
 
     const { data } = await firstValueFrom(
@@ -116,3 +116,12 @@ export class UsaplDbService {
     return data;
   }
 }
+
+type GetRecordsDTO = {
+  equipmentLevel?: EquipmentLevelOptions;
+  recordLevel?: RecordLevelOptions;
+  division?: DivisionOptions;
+  weightClass?: string;
+  sex?: SexOptions;
+  state?: USStates;
+};

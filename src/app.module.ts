@@ -9,6 +9,7 @@ import { LoggerMiddleware } from './common/middleware/logger.middleware';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RecordsModule } from './records/records.module';
 import { Record } from './records/records.entity';
+import { UsaplModule } from './usapl/usapl.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { Record } from './records/records.entity';
     SlliModule,
     SingularliveModule,
     RecordsModule,
+    UsaplModule,
   ],
   controllers: [AppController],
   providers: [AppService],
