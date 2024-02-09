@@ -9,14 +9,31 @@ import { SingularliveModule } from 'src/singularlive/singularlive.module';
 import { SingularliveService } from 'src/singularlive/singularlive.service';
 import { MainScene } from 'src/singularlive/scenes/singularlive.mainscene';
 import { SceneManagerService } from 'src/singularlive/singularlive.scenemanager';
+import { UsaplModule } from 'src/usapl/usapl.module';
+import { SlliPreMeetService } from './premeet/premeet.service';
+import { UsaplService } from 'src/usapl/usapl.service';
+import { RecordsService } from 'src/records/records.service';
+import { RecordsModule } from 'src/records/records.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Record } from 'src/records/records.entity';
 
 @Module({
-  imports: [LiftingcastModule, HttpModule, SingularliveModule],
+  imports: [
+    LiftingcastModule,
+    HttpModule,
+    SingularliveModule,
+    UsaplModule,
+    RecordsModule,
+    TypeOrmModule.forFeature([Record]),
+  ],
   controllers: [SlliController],
   providers: [
     SessionManagerService,
     LiftingcastService,
+    UsaplService,
+    RecordsService,
     LiftingcastEndpoint,
+    SlliPreMeetService,
     SingularliveService,
     MainScene,
     SceneManagerService,
