@@ -1,5 +1,5 @@
 import { HttpService } from '@nestjs/axios';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { firstValueFrom } from 'rxjs';
 import { WeightClass, Division, RankingEntry, Record } from './usapl.enteties';
 import {
@@ -14,8 +14,9 @@ import {
 
 @Injectable()
 export class UsaplService {
+  private readonly logger = new Logger(UsaplService.name);
   private usaplDbBaseUrl = 'https://usapl.liftingdatabase.com/api';
-  constructor(private readonly httpService: HttpService) { }
+  constructor(private readonly httpService: HttpService) {}
 
   async getDivisions() {
     const url = `${this.usaplDbBaseUrl}/divisions`;
@@ -69,7 +70,7 @@ export class UsaplService {
     if (getRecordsDTO.state !== undefined && getRecordsDTO.state !== null) {
       queryParameters.append('state', getRecordsDTO.state);
     }
-
+    this.logger.debug(queryParameters);
     const { data } = await firstValueFrom(
       this.httpService.get<Array<Record>>(url, { params: queryParameters }),
     );
@@ -117,7 +118,7 @@ export class UsaplService {
   }
 }
 
-type GetRecordsDTO = {
+export type GetRecordsDTO = {
   equipmentLevel?: EquipmentLevelOptions;
   recordLevel?: RecordLevelOptions;
   division?: DivisionOptions;
