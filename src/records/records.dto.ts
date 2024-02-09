@@ -1,8 +1,10 @@
 export class RecordDTO {
-  recordList: string;
-  // lifterID: string;
   weight: number;
+  recordLevel: string;
   weightClassID: string;
   discipline: string;
   division: string;
+  equipmentLevel: string;
+  sex: string;
+  usState?: string;
 }

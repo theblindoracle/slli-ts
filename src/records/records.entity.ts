@@ -18,7 +18,10 @@ export class Record {
   updatedAt: Date;
 
   @Column()
-  recordList: string;
+  recordLevel: string;
+
+  @Column()
+  equipmentLevel: string;
 
   @Column('float')
   weight: number;
@@ -31,4 +34,10 @@ export class Record {
 
   @Column()
   division: string;
+
+  @Column()
+  sex: string;
+
+  @Column({ nullable: true })
+  usState: string;
 }

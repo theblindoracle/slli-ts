@@ -9,7 +9,7 @@ export class RecordsService {
   constructor(
     @InjectRepository(Record)
     private readonly recordsRepositoy: Repository<Record>,
-  ) { }
+  ) {}
 
   create(record: RecordDTO) {
     return this.recordsRepositoy.save(record);

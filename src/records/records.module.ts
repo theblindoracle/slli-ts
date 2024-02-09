@@ -9,4 +9,4 @@ import { RecordsController } from './records.controller';
   providers: [RecordsService],
   controllers: [RecordsController],
 })
-export class RecordsModule { }
+export class RecordsModule {}
