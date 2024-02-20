@@ -18,10 +18,17 @@ export class SingularliveService {
     const body = compositions instanceof Array ? compositions : [compositions];
 
     const url = `${this.baseUrl}/${controlAppToken}/control`;
+    if (body.length === 0) {
+      this.logger.warn('body is empty');
+      this.logger.warn(new Error().stack);
+      return;
+    }
 
     return firstValueFrom(
       this.httpService.patch<IsSuccessResponse>(url, body).pipe(
         catchError((error: AxiosError) => {
+          this.logger.error(url);
+          this.logger.error(body);
           this.logger.error(error.code);
           this.logger.error(error.message);
 

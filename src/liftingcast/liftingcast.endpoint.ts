@@ -43,6 +43,7 @@ export class LiftingcastEndpoint {
       })
       .pipe(
         catchError((error: AxiosError) => {
+          this.logger.error('getPlatformDocument');
           this.logger.error(error);
           throw error;
         }),
@@ -58,17 +59,24 @@ export class LiftingcastEndpoint {
         delay: (error, retryCount) => {
           if (
             isAxiosError(error) &&
-            error.status === HttpStatus.TOO_MANY_REQUESTS
+            error.response.status === HttpStatus.TOO_MANY_REQUESTS
           ) {
+            this.logger.warn('Too Many Requests');
+
             const backoffTimeMs =
               error.response.data?.additionalInfo?.msBeforeNext;
-            return timer(backoffTimeMs ?? retryCount * 5000);
+            const backoff = backoffTimeMs ?? retryCount * 5000;
+
+            this.logger.warn('backoffTimeMs', backoff);
+            return timer(backoff);
           }
         },
       }),
-      catchError((error: AxiosError) => {
-        // TODO: handle 429 too many request logic
+      catchError((error) => {
+        this.logger.error('getMeet');
+        this.logger.error(meetId);
         this.logger.error(error);
+        this.logger.error(new Error().stack);
         throw error;
       }),
     );

@@ -92,7 +92,7 @@ export type LiftName = 'squat' | 'bench' | 'deadlift';
 export class Attempt {
   id: string;
   liftName: LiftName;
-  attemptNumber: number;
+  attemptNumber: string;
   lifter: { id: string };
 }
 

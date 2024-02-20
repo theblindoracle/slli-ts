@@ -15,7 +15,6 @@ import { SingularliveService } from 'src/singularlive/singularlive.service';
 export class SessionManagerService {
   constructor(
     private readonly liftingcastService: LiftingcastService,
-    private readonly singularService: SingularliveService,
     private readonly eventEmitter: EventEmitter2,
     private readonly sceneManager: SceneManagerService,
   ) {}
@@ -54,12 +53,13 @@ export class SessionManagerService {
     let previousClockState: ClockState = 'initial';
     let previousClockTimerLength: number;
     let previousAttemptId: string;
+    let previousAttemptChangeInProgress = false;
     let lastUpdate = Date.now();
 
     this.logger.log(
       `starting poll process for ${session.liftingcastMeetID}:${session.liftingcastPlatformID}`,
     );
-    while (Date.now() - lastUpdate < 1000 * 60 * 5) {
+    while (Date.now() - lastUpdate < 1000 * 60 * 30) {
       const response = await this.liftingcastService.listenForDocumentChanges(
         session.liftingcastMeetID,
         session.liftingcastPlatformID,
@@ -68,8 +68,8 @@ export class SessionManagerService {
       );
 
       if (response.status !== HttpStatus.OK) {
-        this.logger.error('listenForDocumentChanges failed');
-        this.logger.error('restarting poll');
+        this.logger.warn('listenForDocumentChanges failed');
+        this.logger.warn('restarting poll');
         continue;
       }
 
@@ -84,14 +84,13 @@ export class SessionManagerService {
         (result) => result.doc._id === session.liftingcastPlatformID,
       )?.doc;
       if (platformDoc) {
-        if (platformDoc.currentAttemptId !== previousAttemptId) {
+        if (
+          platformDoc.currentAttemptId !== previousAttemptId ||
+          platformDoc.attemptChangeInProgress !==
+            previousAttemptChangeInProgress
+        ) {
           const meetDocument = await this.liftingcastService.getMeetData(
             session.liftingcastMeetID,
-          );
-          this.logger.debug(
-            'UpdatedCurrentAttemptID',
-            `current  ${platformDoc.currentAttemptId}`,
-            `previous ${previousAttemptId}`,
           );
           this.eventEmitter.emit(
             LiftingcastEvents.CurrentAttemptUpdated,
@@ -103,13 +102,14 @@ export class SessionManagerService {
           );
 
           previousAttemptId = platformDoc.currentAttemptId;
+          // TODO: turn this into its own event
+          previousAttemptChangeInProgress = platformDoc.attemptChangeInProgress;
         }
 
         if (
           platformDoc.clockState !== previousClockState ||
           previousClockTimerLength !== platformDoc.clockTimerLength
         ) {
-          this.logger.debug('platformDoc.Clockstate', platformDoc.clockState);
           this.eventEmitter.emit(
             LiftingcastEvents.ClockStateChanged,
             new ClockStateChangedEvent({

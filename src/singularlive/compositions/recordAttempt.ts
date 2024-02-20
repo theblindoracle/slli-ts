@@ -1,34 +1,45 @@
+import { DivisionOptions } from 'src/usapl/usapl.dtos';
 import { SingularColor } from '../singularlive.payloads';
+import { Record } from 'src/records/records.entity';
 
 export class RecordAttemptComp {
   compID = '545affc7-0bbb-8438-519a-140e0eec8c27';
 
-  buildPayload(
-    recordLevel: RecordLevel,
-    division: string,
-    weightClass: string,
-  ): RecordAttemptPayload {
+  buildPayload(record: Record): RecordAttemptPayload {
     let bgColor = '';
     let textColor = '';
-    switch (recordLevel) {
+    switch (record.recordLevel) {
       case 'state':
-        bgColor = '#db1717';
+        bgColor = '#c21e1e';
         textColor = '#ffffff';
+        break;
+      case 'american':
+        bgColor = '#333fb9';
+        textColor = '#ffffff';
+        break;
       case 'national':
-        bgColor = '#1767db';
+        bgColor = '#2c2c2c';
         textColor = '#ffffff';
+        break;
       case 'world':
-        bgColor = '#f5ea48';
+      default:
+        bgColor = '#a8911c';
         textColor = '#000000';
+        break;
     }
 
-    const recordText = `${recordLevel} ${division} record attempt - ${weightClass}`;
+    const division =
+      Object.keys(DivisionOptions)[
+        Object.values(DivisionOptions).indexOf(
+          record.division as DivisionOptions,
+        )
+      ];
 
+    const recordText = `${record.recordLevel} ${record.equipmentLevel} ${division} ${record.discipline} record attempt - ${record.weightClassID} KG`;
+    console.log(recordText);
     return { recordText, textColor, bgColor };
   }
 }
-
-type RecordLevel = 'state' | 'national' | 'world';
 
 export type RecordAttemptPayload = {
   recordText: string;

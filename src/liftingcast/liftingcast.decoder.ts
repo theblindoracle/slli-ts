@@ -49,9 +49,9 @@ export class LiftingcastDivisionDecoder {
     const youth2Regex = /Youth \(10-11\)/;
     const youth3Regex = /Youth \(12-13\)/;
     const teenRegex = /Teen/;
-    const teen1Regex = /Teen I/;
-    const teen2Regex = /Teen II/;
-    const teen3Regex = /Teen III/;
+    const teen1Regex = /Teen I\b/;
+    const teen2Regex = /Teen II\b/;
+    const teen3Regex = /Teen III\b/;
     const juniorRegex = /Junior/;
     const openRegex = /Open/;
     const masterRegex = /(?!Master [ABI])(Master)/;
@@ -91,14 +91,14 @@ export class LiftingcastDivisionDecoder {
     if (youthRegex.test(divisionName)) {
       return AgeGroup.Youth;
     }
-    if (teen1Regex.test(divisionName)) {
-      return AgeGroup.Teen1;
+    if (teen3Regex.test(divisionName)) {
+      return AgeGroup.Teen3;
     }
     if (teen2Regex.test(divisionName)) {
       return AgeGroup.Teen2;
     }
-    if (teen3Regex.test(divisionName)) {
-      return AgeGroup.Teen3;
+    if (teen1Regex.test(divisionName)) {
+      return AgeGroup.Teen1;
     }
     if (teenRegex.test(divisionName)) {
       return AgeGroup.Teen;

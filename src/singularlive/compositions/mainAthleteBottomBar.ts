@@ -5,6 +5,7 @@ import {
   getLiftTextColor,
   isValueNullOrEmptyString,
 } from '../singularlive.utils';
+import { isLiftGood } from 'src/liftingcast/liftingcast.utils';
 
 export class MainAthleteBottomBar {
   squatCompID = '9b768806-7fd1-43b1-a6e6-adf1a706972b';
@@ -33,16 +34,15 @@ export class MainAthleteBottomBar {
       bottomBarPayload.isBenchActive = false;
       bottomBarPayload.isDeadliftActive = true;
     }
-
-    if (currentAttempt.attemptNumber === 1) {
+    if (currentAttempt.attemptNumber === '1') {
       bottomBarPayload.attempt1Active = true;
       bottomBarPayload.attempt2Active = false;
       bottomBarPayload.attempt3Active = false;
-    } else if (currentAttempt.attemptNumber === 2) {
+    } else if (currentAttempt.attemptNumber === '2') {
       bottomBarPayload.attempt1Active = false;
       bottomBarPayload.attempt2Active = true;
       bottomBarPayload.attempt3Active = false;
-    } else if (currentAttempt.attemptNumber === 3) {
+    } else if (currentAttempt.attemptNumber === '3') {
       bottomBarPayload.attempt1Active = false;
       bottomBarPayload.attempt2Active = false;
       bottomBarPayload.attempt3Active = true;
@@ -51,7 +51,6 @@ export class MainAthleteBottomBar {
       bottomBarPayload.attempt2Active = false;
       bottomBarPayload.attempt3Active = false;
     }
-
     return bottomBarPayload;
   };
 
@@ -82,6 +81,10 @@ export class MainAthleteBottomBar {
 
     return payload;
   };
+
+  buildAttemptString(attempt: Lift) {
+    return isLiftGood(attempt) ? attempt.weight : `-${attempt.weight}`;
+  }
 
   buildBenchPayload = (benchLifts: Lift[], bestSquatWeight: number) => {
     const payload: BenchPayload = {

@@ -3,19 +3,19 @@ import { SingularColor } from '../singularlive.payloads';
 export class SuccessfulRecordComp {
   compID = '99a12b5f-fb5e-42d6-ac9f-77f014c12c57';
 
-  buildPayload(recordLevel: RecordLevel): SuccessfulRecordPayload {
+  buildPayload(recordLevel: string): SuccessfulRecordPayload {
     switch (recordLevel) {
       case 'state':
-        return { recordLabel: 'new state record', bgColor: '#870e0e' };
+        return { recordLabel: 'new state record', bgColor: '#c21e1e' };
       case 'national':
-        return { recordLabel: 'new american record', bgColor: '#1d2574' };
+        return { recordLabel: 'new american record', bgColor: '#333fb9' };
+      case 'national':
+        return { recordLabel: 'new american record', bgColor: '#2c2c2c' };
       case 'world':
-        return { recordLabel: 'new world record', bgColor: '#a9942e' };
+        return { recordLabel: 'new world record', bgColor: '#a8911c' };
     }
   }
 }
-
-type RecordLevel = 'state' | 'national' | 'world';
 
 export type SuccessfulRecordPayload = {
   bgColor: SingularColor;

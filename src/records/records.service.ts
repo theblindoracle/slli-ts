@@ -8,30 +8,30 @@ import { RecordDTO } from './records.dto';
 export class RecordsService {
   constructor(
     @InjectRepository(Record)
-    private readonly recordsRepositoy: Repository<Record>,
+    private readonly recordsRepository: Repository<Record>,
   ) {}
 
   create(record: RecordDTO) {
-    return this.recordsRepositoy.save(record);
+    return this.recordsRepository.save(record);
   }
 
   update(id: number, record: RecordDTO) {
-    return this.recordsRepositoy.update(id, record);
+    return this.recordsRepository.update(id, record);
   }
 
   findAll(): Promise<Record[]> {
-    return this.recordsRepositoy.find();
+    return this.recordsRepository.find();
   }
 
   findById(id: number): Promise<Record | null> {
-    return this.recordsRepositoy.findOneBy({ id });
+    return this.recordsRepository.findOneBy({ id });
   }
 
   findBy(options: FindOptionsWhere<Record>) {
-    return this.recordsRepositoy.findBy(options);
+    return this.recordsRepository.findBy(options);
   }
 
   remove(id: number) {
-    return this.recordsRepositoy.delete(id);
+    return this.recordsRepository.delete(id);
   }
 }

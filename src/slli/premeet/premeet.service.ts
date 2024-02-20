@@ -1,10 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import {
-  Division,
-  Lifter,
-  LifterDivision,
-  MeetDocument,
-} from 'src/liftingcast/liftingcast.enteties';
+import { Division, LifterDivision } from 'src/liftingcast/liftingcast.enteties';
 import { LiftingcastService } from 'src/liftingcast/liftingcast.service';
 import { GetRecordsDTO, UsaplService } from 'src/usapl/usapl.service';
 import { LiftingcastDivisionDecoder } from 'src/liftingcast/liftingcast.decoder';
@@ -12,7 +7,6 @@ import { AgeGroup, EquipmentLevel, Gender } from '../slli.enteties';
 import {
   DivisionOptions,
   EquipmentLevelOptions,
-  RecordLevelOptions,
   SexOptions,
   USStates,
 } from 'src/usapl/usapl.dtos';
@@ -29,10 +23,9 @@ export class SlliPreMeetService {
   ) {}
 
   private readonly divisionDecoder = new LiftingcastDivisionDecoder();
-  async generatePreMeetReport() {
+  async generatePreMeetReport(meetID: string) {
     // get roster and their divisions from liftingcast
-    const liftingcastData =
-      await this.liftingcastService.getMeetData('msixsv70zejt');
+    const liftingcastData = await this.liftingcastService.getMeetData(meetID);
 
     let getRecordsDTOs: Array<GetRecordsDTO> = [];
 
@@ -78,7 +71,7 @@ export class SlliPreMeetService {
         const record: RecordDTO = {
           weight: usaplRecord.weight,
           recordLevel: getRecordDTO.recordLevel,
-          weightClassID: usaplRecord.weightClass.name,
+          weightClassID: usaplRecord.weightClass.name.replace('-', ''),
           discipline: usaplRecord.discipline,
           division: usaplRecord.division,
           sex: getRecordDTO.sex,
@@ -114,11 +107,11 @@ export class SlliPreMeetService {
 
     const dto = {
       weightClass: weightClassName,
-      equipmentLevel: this.slliToUsaplEquipmentMap.get(
+      equipmentLevel: slliToUsaplEquipmentMap.get(
         divisionDecoded.equipmentLevel,
       ),
-      division: this.slliToUsaplDivisionMap.get(divisionDecoded.ageGroup),
-      sex: this.slliToUsaplGenderMap.get(divisionDecoded.gender),
+      division: slliToUsaplDivisionMap.get(divisionDecoded.ageGroup),
+      sex: slliToUsaplGenderMap.get(divisionDecoded.gender),
     };
     const dtos: Array<GetRecordsDTO> = [
       { ...dto, recordLevel: 'american' },
@@ -135,56 +128,55 @@ export class SlliPreMeetService {
 
     return dtos;
   }
-
-  private slliToUsaplEquipmentMap = new Map<
-    EquipmentLevel,
-    EquipmentLevelOptions
-  >([
-    [EquipmentLevel.Raw, 'raw'],
-    [EquipmentLevel.RawWithWraps, 'raw_with_wraps'],
-    [EquipmentLevel.Equipped, 'equipped'],
-  ]);
-
-  private slliToUsaplGenderMap = new Map<Gender, SexOptions>([
-    [Gender.Male, 'm'],
-    [Gender.Female, 'f'],
-    [Gender.Mx, 'mx'],
-  ]);
-
-  private slliToUsaplDivisionMap = new Map<AgeGroup, DivisionOptions>([
-    [AgeGroup.Youth, DivisionOptions.Youth],
-    [AgeGroup.Youth1, DivisionOptions.Youth1],
-    [AgeGroup.Youth2, DivisionOptions.Youth2],
-    [AgeGroup.Youth3, DivisionOptions.Youth3],
-    [AgeGroup.Teen, DivisionOptions.Teen],
-    [AgeGroup.Teen1, DivisionOptions.Teen1],
-    [AgeGroup.Teen2, DivisionOptions.Teen2],
-    [AgeGroup.Teen3, DivisionOptions.Teen3],
-    [AgeGroup.Junior, DivisionOptions.Junior],
-    [AgeGroup.Open, DivisionOptions.Open],
-    [AgeGroup.Master, DivisionOptions.Master],
-    [AgeGroup.Master1, DivisionOptions.Master1],
-    [AgeGroup.Master1A, DivisionOptions.Master1a],
-    [AgeGroup.Master1B, DivisionOptions.Master1b],
-    [AgeGroup.Master2, DivisionOptions.Master2],
-    [AgeGroup.Master2A, DivisionOptions.Master2a],
-    [AgeGroup.Master2B, DivisionOptions.Master2b],
-    [AgeGroup.Master3, DivisionOptions.Master3],
-    [AgeGroup.Master3A, DivisionOptions.Master3a],
-    [AgeGroup.Master3B, DivisionOptions.Master3b],
-    [AgeGroup.Master4, DivisionOptions.Master4],
-    [AgeGroup.Master4A, DivisionOptions.Master4a],
-    [AgeGroup.Master4B, DivisionOptions.Master4b],
-    [AgeGroup.Master5, DivisionOptions.Master5],
-    [AgeGroup.Master5A, DivisionOptions.Master5a],
-    [AgeGroup.Master5B, DivisionOptions.Master5b],
-    [AgeGroup.Master6, DivisionOptions.Master6],
-    [AgeGroup.Master6A, DivisionOptions.Master6a],
-    [AgeGroup.Master6B, DivisionOptions.Master6],
-    [AgeGroup.Guest, DivisionOptions.Guest],
-    [AgeGroup.Collegiate, DivisionOptions.Collegiate],
-    [AgeGroup.HighSchool, DivisionOptions.HighSchool],
-    [AgeGroup.HighSchoolVarsity, DivisionOptions.HighSchoolVarsity],
-    [AgeGroup.HighSchoolJV, DivisionOptions.HighSchoolJV],
-  ]);
 }
+export const slliToUsaplEquipmentMap = new Map<
+  EquipmentLevel,
+  EquipmentLevelOptions
+>([
+  [EquipmentLevel.Raw, 'raw'],
+  [EquipmentLevel.RawWithWraps, 'raw_with_wraps'],
+  [EquipmentLevel.Equipped, 'equipped'],
+]);
+
+export const slliToUsaplGenderMap = new Map<Gender, SexOptions>([
+  [Gender.Male, 'm'],
+  [Gender.Female, 'f'],
+  [Gender.Mx, 'mx'],
+]);
+
+export const slliToUsaplDivisionMap = new Map<AgeGroup, DivisionOptions>([
+  [AgeGroup.Youth, DivisionOptions.Youth],
+  [AgeGroup.Youth1, DivisionOptions.Youth1],
+  [AgeGroup.Youth2, DivisionOptions.Youth2],
+  [AgeGroup.Youth3, DivisionOptions.Youth3],
+  [AgeGroup.Teen, DivisionOptions.Teen],
+  [AgeGroup.Teen1, DivisionOptions.Teen1],
+  [AgeGroup.Teen2, DivisionOptions.Teen2],
+  [AgeGroup.Teen3, DivisionOptions.Teen3],
+  [AgeGroup.Junior, DivisionOptions.Junior],
+  [AgeGroup.Open, DivisionOptions.Open],
+  [AgeGroup.Master, DivisionOptions.Master],
+  [AgeGroup.Master1, DivisionOptions.Master1],
+  [AgeGroup.Master1A, DivisionOptions.Master1a],
+  [AgeGroup.Master1B, DivisionOptions.Master1b],
+  [AgeGroup.Master2, DivisionOptions.Master2],
+  [AgeGroup.Master2A, DivisionOptions.Master2a],
+  [AgeGroup.Master2B, DivisionOptions.Master2b],
+  [AgeGroup.Master3, DivisionOptions.Master3],
+  [AgeGroup.Master3A, DivisionOptions.Master3a],
+  [AgeGroup.Master3B, DivisionOptions.Master3b],
+  [AgeGroup.Master4, DivisionOptions.Master4],
+  [AgeGroup.Master4A, DivisionOptions.Master4a],
+  [AgeGroup.Master4B, DivisionOptions.Master4b],
+  [AgeGroup.Master5, DivisionOptions.Master5],
+  [AgeGroup.Master5A, DivisionOptions.Master5a],
+  [AgeGroup.Master5B, DivisionOptions.Master5b],
+  [AgeGroup.Master6, DivisionOptions.Master6],
+  [AgeGroup.Master6A, DivisionOptions.Master6a],
+  [AgeGroup.Master6B, DivisionOptions.Master6],
+  [AgeGroup.Guest, DivisionOptions.Guest],
+  [AgeGroup.Collegiate, DivisionOptions.Collegiate],
+  [AgeGroup.HighSchool, DivisionOptions.HighSchool],
+  [AgeGroup.HighSchoolVarsity, DivisionOptions.HighSchoolVarsity],
+  [AgeGroup.HighSchoolJV, DivisionOptions.HighSchoolJV],
+]);

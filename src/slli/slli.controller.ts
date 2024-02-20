@@ -21,7 +21,7 @@ export class SlliController {
   }
 
   @Post('generate')
-  generate() {
-    return this.premeetService.generatePreMeetReport();
+  generate(@Query('meetID') meetID: string) {
+    return this.premeetService.generatePreMeetReport(meetID);
   }
 }

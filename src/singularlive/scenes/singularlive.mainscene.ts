@@ -5,7 +5,10 @@ import {
   RefLights,
 } from 'src/liftingcast/liftingcast.enteties';
 import { SingularliveService } from '../singularlive.service';
-import { getBestLiftWeight } from 'src/liftingcast/liftingcast.utils';
+import {
+  getBestLiftWeight,
+  isRefDecisionGood,
+} from 'src/liftingcast/liftingcast.utils';
 import { UpdateControlAppContentDTO } from '../singularlive.dtos';
 import { Logger } from '@nestjs/common';
 import {
@@ -23,11 +26,18 @@ import {
   SecondAttemptStingerComp,
   ThirdAttemptStingerComp,
 } from '../compositions/attemptStinger';
+import { RecordAttemptComp } from '../compositions/recordAttempt';
+import { SuccessfulRecordComp } from '../compositions/successfulRecord';
+import { RecordsModel } from 'src/records/records.model';
+import { Record } from 'src/records/records.entity';
 
 export class MainScene {
   private readonly logger = new Logger(MainScene.name);
 
-  constructor(private readonly singularliveService: SingularliveService) {}
+  constructor(
+    private readonly singularliveService: SingularliveService,
+    private readonly recordsModel: RecordsModel,
+  ) {}
 
   meetID: string;
   platformID: string;
@@ -40,6 +50,8 @@ export class MainScene {
   private readonly weightClassComp = new WeightClassComp();
   private readonly secondAttemptStingerComp = new SecondAttemptStingerComp();
   private readonly thirdAttemptStingerComp = new ThirdAttemptStingerComp();
+  private readonly recordAttemptComp = new RecordAttemptComp();
+  private readonly successfulRecordComp = new SuccessfulRecordComp();
 
   init(meetID: string, platformID: string, controlAppToken: string) {
     this.meetID = meetID;
@@ -60,8 +72,6 @@ export class MainScene {
       subCompositionId: this.shortTimerComp.shortTimerCompID,
       payload: payload,
     };
-
-    this.logger.debug(`ClockPayload`, payload);
 
     this.singularliveService.updateControlAppContent(
       this.controlAppToken,
@@ -94,13 +104,19 @@ export class MainScene {
       this.lightState.left.decision &&
       this.lightState.right.decision
     ) {
-      await this.updateLights(this.lightState);
+      await this.playLiftResult(this.lightState);
     }
-
-    this.lightState = this.initialLights;
   }
 
-  async updateLights(refLights: RefLights) {
+  private isLiftGoodViaLights(lightState: RefLights) {
+    return isRefDecisionGood(lightState.left.decision)
+      ? isRefDecisionGood(lightState.head.decision) ||
+          isRefDecisionGood(lightState.right.decision)
+      : isRefDecisionGood(lightState.head.decision) &&
+          isRefDecisionGood(lightState.right.decision);
+  }
+
+  async playLiftResult(refLights: RefLights) {
     const leftInfractionBarPayload: LightInfractionPayload =
       this.lightsComp.buildLightInfractionPayload(refLights.left);
     const rightInfractionBarPayload: LightInfractionPayload =
@@ -127,19 +143,49 @@ export class MainScene {
       },
     ];
 
-    this.singularliveService.updateControlAppContent(
+    const phase2Update: UpdateControlAppContentDTO[] = [];
+
+    //if there is a record and the lift is good, play successfulRecord
+    const liftIsGood = this.isLiftGoodViaLights(this.lightState);
+    if (liftIsGood && this.record) {
+      compositionUpdates.push({
+        subCompositionId: this.successfulRecordComp.compID,
+        payload: this.successfulRecordComp.buildPayload(
+          this.record.recordLevel,
+        ),
+        state: 'In',
+      });
+
+      phase2Update.push({
+        subCompositionId: this.successfulRecordComp.compID,
+        state: 'Out',
+      });
+    }
+
+    await this.singularliveService.updateControlAppContent(
       this.controlAppToken,
       compositionUpdates,
     );
+
+    await delay(5000);
+
+    if (phase2Update.length > 0) {
+      await this.singularliveService.updateControlAppContent(
+        this.controlAppToken,
+        phase2Update,
+      );
+    }
   }
 
+  record: Record = null;
+
   async onCurrentAttemptUpdated(event: CurrentAttemptUpdatedEvent) {
+    // reset lights on attempt update
+    this.lightState = this.initialLights;
+    this.record = null;
+
     if (event.platformID !== this.platformID && event.meetID !== this.meetID)
       return;
-
-    this.logger.log(
-      `CurrentAttemptUpdated in MainScene ${event.meetID} ${event.platformID}`,
-    );
 
     const meetDocument = event.meetDocument;
     const platform = meetDocument.platforms.find(
@@ -166,6 +212,21 @@ export class MainScene {
         weightClass.id === currentLifter.divisions[0].weightClassId,
     );
 
+    const currentLift = [
+      ...currentLifter.lifts.squat,
+      ...currentLifter.lifts.bench,
+      ...currentLifter.lifts.deadlift,
+    ].find((lift) => lift.id === platform.currentAttempt.id);
+
+    this.record = await this.recordsModel.getBestDivisionRecord(
+      weightClass.name,
+      division.name,
+      currentLifter.state,
+      platform.currentAttempt.liftName,
+      currentLift.weight,
+      currentLifter.divisions[0].forecastedTotal,
+    );
+
     const nextLifters = platform.nextAttempts
       .map((attempt) => attempt.lifter.id)
       .map(
@@ -178,17 +239,19 @@ export class MainScene {
       meetDocument.platforms[0].currentAttempt,
       `${division.name} - ${weightClass.name} `,
       nextLifters,
+      this.record,
     );
   }
 
   private nextLifterCounter = 3;
-  private previousAttemptNumber = 0;
+  private previousAttemptNumber = '0';
 
   async playAttemptChange(
     currentLifter: Lifter,
     currentAttempt: Attempt,
     divisionName: string,
     nextLifters: string[],
+    currentAttemptRecord: Record,
   ) {
     const phase1Updates: UpdateControlAppContentDTO[] = [];
     const phase2Updates: UpdateControlAppContentDTO[] = [];
@@ -233,10 +296,10 @@ export class MainScene {
       state: 'In',
     });
 
-    phase2Updates.push({
-      subCompositionId: this.weightClassComp.compID,
-      state: 'Out',
-    });
+    // phase2Updates.push({
+    //   subCompositionId: this.weightClassComp.compID,
+    //   state: 'Out',
+    // });
 
     if (this.nextLifterCounter === 3) {
       phase1Updates.push({
@@ -255,7 +318,7 @@ export class MainScene {
     this.nextLifterCounter++;
 
     if (this.previousAttemptNumber !== currentAttempt.attemptNumber) {
-      if (currentAttempt.attemptNumber === 2) {
+      if (currentAttempt.attemptNumber === '2') {
         phase1Updates.push({
           subCompositionId: this.secondAttemptStingerComp.compID,
           state: 'In',
@@ -266,7 +329,7 @@ export class MainScene {
         });
       }
 
-      if (currentAttempt.attemptNumber === 3) {
+      if (currentAttempt.attemptNumber === '3') {
         phase1Updates.push({
           subCompositionId: this.thirdAttemptStingerComp.compID,
           state: 'In',
@@ -280,16 +343,31 @@ export class MainScene {
       this.previousAttemptNumber = currentAttempt.attemptNumber;
     }
 
+    //play record attempt if applicable
+    if (currentAttemptRecord) {
+      phase1Updates.push({
+        subCompositionId: this.recordAttemptComp.compID,
+        payload: this.recordAttemptComp.buildPayload(currentAttemptRecord),
+        state: 'In',
+      });
+
+      phase2Updates.push({
+        subCompositionId: this.recordAttemptComp.compID,
+        state: 'Out',
+      });
+    }
+
     await this.singularliveService.updateControlAppContent(
       this.controlAppToken,
       phase1Updates,
     );
 
-    await delay(3000);
-
-    await this.singularliveService.updateControlAppContent(
-      this.controlAppToken,
-      phase2Updates,
-    );
+    await delay(7000);
+    if (phase2Updates.length > 0) {
+      await this.singularliveService.updateControlAppContent(
+        this.controlAppToken,
+        phase2Updates,
+      );
+    }
   }
 }
