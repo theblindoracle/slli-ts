@@ -25,7 +25,6 @@ export class RecordsModel {
     const divisionDetails = new LiftingcastDivisionDecoder().decode(
       lcDivisionName,
     );
-    this.logger.debug(divisionDetails);
     const equipment = slliToUsaplEquipmentMap.get(
       divisionDetails.equipmentLevel,
     );

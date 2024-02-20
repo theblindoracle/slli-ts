@@ -9,6 +9,7 @@ import {
 } from 'src/liftingcast/liftingcast.event';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { RecordsModel } from 'src/records/records.model';
+import { RankingsModel } from 'src/rankings/rankings.model';
 
 @Injectable()
 export class SceneManagerService {
@@ -16,6 +17,7 @@ export class SceneManagerService {
   constructor(
     private readonly singularliveService: SingularliveService,
     private readonly recordModel: RecordsModel,
+    private readonly rankingsModel: RankingsModel,
     private readonly eventEmmiter: EventEmitter2,
   ) {}
 
@@ -31,6 +33,7 @@ export class SceneManagerService {
     const mainScene = new MainScene(
       this.singularliveService,
       this.recordModel,
+      this.rankingsModel,
     ).init(controlAppToken, meetID, platformID);
 
     this.eventEmmiter.on(

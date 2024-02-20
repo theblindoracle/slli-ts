@@ -30,6 +30,7 @@ import { RecordAttemptComp } from '../compositions/recordAttempt';
 import { SuccessfulRecordComp } from '../compositions/successfulRecord';
 import { RecordsModel } from 'src/records/records.model';
 import { Record } from 'src/records/records.entity';
+import { RankingsModel } from 'src/rankings/rankings.model';
 
 export class MainScene {
   private readonly logger = new Logger(MainScene.name);
@@ -37,6 +38,7 @@ export class MainScene {
   constructor(
     private readonly singularliveService: SingularliveService,
     private readonly recordsModel: RecordsModel,
+    private readonly rankingsModel: RankingsModel,
   ) {}
 
   meetID: string;
@@ -226,6 +228,14 @@ export class MainScene {
       currentLift.weight,
       currentLifter.divisions[0].forecastedTotal,
     );
+
+    const ranking = await this.rankingsModel.getLifterRanking(
+      currentLifter.name,
+      weightClass.name,
+      division.name,
+    );
+
+    this.logger.log('Lifter Ranking', ranking);
 
     const nextLifters = platform.nextAttempts
       .map((attempt) => attempt.lifter.id)

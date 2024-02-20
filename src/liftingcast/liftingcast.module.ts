@@ -13,5 +13,6 @@ import { LiftingcastEventListeners } from './liftingcast.listeners';
     LiftingcastEventListeners,
   ],
   controllers: [LiftingcastController],
+  exports: [LiftingcastService, LiftingcastEndpoint, LiftingcastEventListeners],
 })
 export class LiftingcastModule {}

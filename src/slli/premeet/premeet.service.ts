@@ -1,7 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Division, LifterDivision } from 'src/liftingcast/liftingcast.enteties';
 import { LiftingcastService } from 'src/liftingcast/liftingcast.service';
-import { GetRecordsDTO, UsaplService } from 'src/usapl/usapl.service';
+import {
+  GetRankingsDTO,
+  GetRecordsDTO,
+  UsaplService,
+} from 'src/usapl/usapl.service';
 import { LiftingcastDivisionDecoder } from 'src/liftingcast/liftingcast.decoder';
 import { AgeGroup, EquipmentLevel, Gender } from '../slli.enteties';
 import {
@@ -9,9 +13,12 @@ import {
   EquipmentLevelOptions,
   SexOptions,
   USStates,
+  WeightClassOptions,
 } from 'src/usapl/usapl.dtos';
 import { RecordsService } from 'src/records/records.service';
 import { RecordDTO } from 'src/records/records.dto';
+import { RankingsService } from 'src/rankings/rankings.service';
+import { RankingDTO } from 'src/rankings/rankings.dto';
 
 @Injectable()
 export class SlliPreMeetService {
@@ -20,6 +27,7 @@ export class SlliPreMeetService {
     private readonly liftingcastService: LiftingcastService,
     private readonly usaplService: UsaplService,
     private readonly recordsService: RecordsService,
+    private readonly rankingsService: RankingsService,
   ) {}
 
   private readonly divisionDecoder = new LiftingcastDivisionDecoder();
@@ -127,6 +135,106 @@ export class SlliPreMeetService {
     }
 
     return dtos;
+  }
+
+  async getRankings() {
+    const getRankingsDTOs = new Array<GetRankingsDTO>();
+
+    const equipmentLevels: Array<EquipmentLevelOptions> = ['raw', 'equipped'];
+
+    const maleWeightClasses: Array<WeightClassOptions> = [
+      '-30',
+      '-35',
+      '-40',
+      '-44',
+      '-48',
+      '-52',
+      '-56',
+      '-60',
+      '-67.5',
+      '-75',
+      '-82.5',
+      '-90',
+      '-100',
+      '-110',
+      '-125',
+      '-140',
+      '140+',
+    ];
+
+    const femaleWeightClasses: Array<WeightClassOptions> = [
+      '-30',
+      '-35',
+      '-40',
+      '-44',
+      '-48',
+      '-52',
+      '-56',
+      '-60',
+      '-67.5',
+      '-75',
+      '-82.5',
+      '-90',
+      '-100',
+      '100+',
+    ];
+
+    for (const equipmentLevel of equipmentLevels) {
+      for (const weightClass of maleWeightClasses) {
+        getRankingsDTOs.push({
+          equipmentLevel: equipmentLevel,
+          weightClass: weightClass,
+          division: DivisionOptions.Open,
+          orderBy: 'points_dots',
+          discipline: 'total',
+          sex: 'm',
+        });
+      }
+
+      for (const weightClass of femaleWeightClasses) {
+        getRankingsDTOs.push({
+          equipmentLevel: equipmentLevel,
+          weightClass: weightClass,
+          division: DivisionOptions.Open,
+          orderBy: 'points_dots',
+          discipline: 'total',
+          sex: 'f',
+        });
+      }
+    }
+
+    for (const getRankingsDTO of getRankingsDTOs) {
+      this.logger.log('Getting Rankings from USAPL DB');
+      this.logger.log(getRankingsDTO);
+
+      const usaplRankings = await this.usaplService.getRanking(getRankingsDTO);
+
+      this.logger.log(usaplRankings);
+
+      const rankingDTOs = new Array<RankingDTO>();
+
+      for (const ranking of usaplRankings) {
+        const dto: RankingDTO = {
+          name: `${ranking.lifter.firstName} ${ranking.lifter.lastName}`,
+          position: ranking.position,
+          points: ranking.points,
+          sex: ranking.lifter.sex,
+          equipmentLevel: getRankingsDTO.equipmentLevel,
+          discipline: getRankingsDTO.discipline,
+          division: getRankingsDTO.division,
+          weightClassID: getRankingsDTO.weightClass.replace('-', ''),
+        };
+
+        rankingDTOs.push(dto);
+      }
+
+      for (const dto of rankingDTOs) {
+        await this.rankingsService.create(dto);
+      }
+    }
+    //get ranking from usapl db
+
+    return await this.rankingsService.findAll();
   }
 }
 export const slliToUsaplEquipmentMap = new Map<

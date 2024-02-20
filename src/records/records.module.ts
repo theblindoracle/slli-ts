@@ -9,6 +9,6 @@ import { RecordsModel } from './records.model';
   imports: [TypeOrmModule.forFeature([Record])],
   providers: [RecordsService, RecordsModel],
   controllers: [RecordsController],
-  exports: [RecordsModel],
+  exports: [RecordsModel, RecordsService, TypeOrmModule.forFeature([Record])],
 })
 export class RecordsModule {}
