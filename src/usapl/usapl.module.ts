@@ -7,5 +7,6 @@ import { UsaplController } from './usapl.controller';
   imports: [HttpModule],
   providers: [UsaplService],
   controllers: [UsaplController],
+  exports: [UsaplService],
 })
 export class UsaplModule { }

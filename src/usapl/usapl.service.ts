@@ -10,13 +10,14 @@ import {
   RecordLevelOptions,
   SexOptions,
   USStates,
+  WeightClassOptions,
 } from './usapl.dtos';
 
 @Injectable()
 export class UsaplService {
   private readonly logger = new Logger(UsaplService.name);
   private usaplDbBaseUrl = 'https://usapl.liftingdatabase.com/api';
-  constructor(private readonly httpService: HttpService) {}
+  constructor(private readonly httpService: HttpService) { }
 
   async getDivisions() {
     const url = `${this.usaplDbBaseUrl}/divisions`;
@@ -78,34 +79,27 @@ export class UsaplService {
     return data;
   }
 
-  async getRanking(
-    equipmentLevel?: EquipmentLevelOptions,
-    division?: DivisionOptions,
-    weightClass?: string,
-    sex?: SexOptions,
-    discipline?: DisciplineOptions,
-    orderBy?: OrderByOptions,
-  ) {
+  async getRanking(getRankingsDTO: Partial<GetRankingsDTO>) {
     const url = `${this.usaplDbBaseUrl}/ranking`;
     const queryParameters = new URLSearchParams();
 
-    if (equipmentLevel) {
-      queryParameters.append('equipmentLevel', equipmentLevel);
+    if (getRankingsDTO.equipmentLevel) {
+      queryParameters.append('equipmentLevel', getRankingsDTO.equipmentLevel);
     }
-    if (division) {
-      queryParameters.append('division', division);
+    if (getRankingsDTO.division) {
+      queryParameters.append('division', getRankingsDTO.division);
     }
-    if (weightClass) {
-      queryParameters.append('weightClass', weightClass);
+    if (getRankingsDTO.weightClass) {
+      queryParameters.append('weightClass', getRankingsDTO.weightClass);
     }
-    if (sex) {
-      queryParameters.append('sex', sex);
+    if (getRankingsDTO.sex) {
+      queryParameters.append('sex', getRankingsDTO.sex);
     }
-    if (discipline) {
-      queryParameters.append('discipline', discipline);
+    if (getRankingsDTO.discipline) {
+      queryParameters.append('discipline', getRankingsDTO.discipline);
     }
-    if (orderBy) {
-      queryParameters.append('orderBy', orderBy);
+    if (getRankingsDTO.orderBy) {
+      queryParameters.append('orderBy', getRankingsDTO.orderBy);
     }
 
     const { data } = await firstValueFrom(
@@ -125,4 +119,13 @@ export type GetRecordsDTO = {
   weightClass?: string;
   sex?: SexOptions;
   state?: USStates;
+};
+
+export type GetRankingsDTO = {
+  equipmentLevel?: EquipmentLevelOptions;
+  division?: DivisionOptions;
+  weightClass?: WeightClassOptions;
+  sex?: SexOptions;
+  discipline?: DisciplineOptions;
+  orderBy?: OrderByOptions;
 };

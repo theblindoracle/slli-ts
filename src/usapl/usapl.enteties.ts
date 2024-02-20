@@ -20,6 +20,7 @@ export interface LifterProfile {
 export interface RankingEntry {
   lifter?: Lifter;
   weight?: number;
+  points?: number;
   position?: number;
 }
 

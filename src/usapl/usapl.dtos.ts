@@ -14,6 +14,26 @@ export type OrderByOptions =
   | 'points_dots'
   | 'points_wilks';
 
+export type WeightClassOptions =
+  | '-30'
+  | '-35'
+  | '-40'
+  | '-44'
+  | '-48'
+  | '-52'
+  | '-56'
+  | '-60'
+  | '-67.5'
+  | '-82.5'
+  | '-90'
+  | '-100'
+  | '100+'
+  | '-75'
+  | '-110'
+  | '-125'
+  | '-140'
+  | '140+';
+
 export enum USStates {
   'AL' = 'AL',
   'AK' = 'AK',
