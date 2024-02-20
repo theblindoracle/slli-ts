@@ -10,6 +10,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { RecordsModule } from './records/records.module';
 import { Record } from './records/records.entity';
 import { UsaplModule } from './usapl/usapl.module';
+import { RankingsModule } from './rankings/rankings.module';
+import { Ranking } from './rankings/rankings.entity';
 
 @Module({
   imports: [
@@ -17,7 +19,7 @@ import { UsaplModule } from './usapl/usapl.module';
       type: 'sqlite',
       database: 'db/db',
       synchronize: true,
-      entities: [Record],
+      entities: [Record, Ranking],
     }),
     EventEmitterModule.forRoot(),
     LiftingcastModule,
@@ -25,6 +27,7 @@ import { UsaplModule } from './usapl/usapl.module';
     SingularliveModule,
     RecordsModule,
     UsaplModule,
+    RankingsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
