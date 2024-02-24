@@ -87,7 +87,7 @@ export class Platform {
   nextAttempts: Attempt[];
 }
 
-export type LiftName = 'squat' | 'bench' | 'deadlift';
+export type LiftName = 'squat' | 'bench' | 'dead';
 
 export class Attempt {
   id: string;
