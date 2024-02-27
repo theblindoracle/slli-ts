@@ -31,6 +31,7 @@ export class CurrentAttemptUpdatedEvent extends Event<CurrentAttemptUpdatedEvent
 }
 
 export class ClockStateChangedEvent extends Event<ClockStateChangedEvent> {
+  platformID: string;
   previousState: string;
   currentState: string;
   clockDuration: number;

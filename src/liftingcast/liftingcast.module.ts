@@ -4,6 +4,7 @@ import { LiftingcastService } from './liftingcast.service';
 import { LiftingcastEndpoint } from './liftingcast.endpoint';
 import { LiftingcastController } from './liftingcast.controller';
 import { LiftingcastEventListeners } from './liftingcast.listeners';
+import { LiftingcastSessionService } from './liftingcast.sessionService';
 
 @Module({
   imports: [HttpModule],
@@ -11,8 +12,14 @@ import { LiftingcastEventListeners } from './liftingcast.listeners';
     LiftingcastEndpoint,
     LiftingcastService,
     LiftingcastEventListeners,
+    LiftingcastSessionService,
   ],
   controllers: [LiftingcastController],
-  exports: [LiftingcastService, LiftingcastEndpoint, LiftingcastEventListeners],
+  exports: [
+    LiftingcastService,
+    LiftingcastEndpoint,
+    LiftingcastEventListeners,
+    LiftingcastSessionService,
+  ],
 })
-export class LiftingcastModule {}
+export class LiftingcastModule { }

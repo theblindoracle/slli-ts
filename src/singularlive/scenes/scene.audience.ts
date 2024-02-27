@@ -56,12 +56,14 @@ import {
 
 export class AudienceScene {
   private readonly logger = new Logger(AudienceScene.name);
-  controlAppToken = '7ypUHtAfROxfEBLrnhJ7e8';
   constructor(
     private readonly singularliveService: SingularliveService,
     private readonly recordsModel: RecordsModel,
     private readonly rankingsModel: RankingsModel,
-  ) { }
+    private controlAppToken: string,
+    public meetID: string,
+    public platformID: string,
+  ) {}
 
   rootWidget = new RootWidget();
 
@@ -306,9 +308,9 @@ export class AudienceScene {
   private isLiftGoodViaLights(lightState: RefLights) {
     return isRefDecisionGood(lightState.left.decision)
       ? isRefDecisionGood(lightState.head.decision) ||
-      isRefDecisionGood(lightState.right.decision)
+          isRefDecisionGood(lightState.right.decision)
       : isRefDecisionGood(lightState.head.decision) &&
-      isRefDecisionGood(lightState.right.decision);
+          isRefDecisionGood(lightState.right.decision);
   }
 
   async playAttemptNumberChange(attemptNumber: string) {
