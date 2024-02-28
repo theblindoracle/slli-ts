@@ -8,11 +8,12 @@ import {
 import { isLiftGood } from 'src/liftingcast/liftingcast.utils';
 import { Ranking } from 'src/rankings/rankings.entity';
 
-export class MainAthleteBottomBar {
-  squatCompID = '9b768806-7fd1-43b1-a6e6-adf1a706972b';
-  benchCompID = '117d6e66-ec38-4214-bf03-5af1e34afe17';
-  deadliftCompID = 'b9b21c1e-5c7a-47e3-b524-271aa4318f91';
-  mainAthleteBottomBarCompID = '4b8a60fe-8f18-46f5-b829-0601f4a6a4d8';
+export class ExpMainAthleteBottomBar {
+  squatCompID = '037b4505-1ef3-46cd-9354-12ad4963dc8f';
+  benchCompID = '83e4674b-0afe-42bc-b449-94c5391cf0d8';
+  deadliftCompID = '597ee421-2a27-4ef9-8259-df65376f74ba';
+  weightClassCompID = '3d5212b1-c977-47ed-a2f8-ee5766dabdc6';
+  mainAthleteBottomBarCompID = '9b098dbd-e8ea-4479-ad16-3dd0f3248098';
 
   buildMainAtleteBottomBarPayload = (
     currentLifter: Lifter,
@@ -163,6 +164,16 @@ export class MainAthleteBottomBar {
 
     return payload;
   };
+
+  buildWeightClassPayload(
+    classTitle: string,
+    weightClass: string,
+  ): WeightClassPayload {
+    return {
+      classTitle,
+      weightClass: `${weightClass} KG`,
+    };
+  }
 }
 
 export type BottomBarPayload = {
@@ -211,4 +222,9 @@ export type DeadliftPayload = {
   deadlift1Color: SingularColor;
   deadlift2Color: SingularColor;
   deadlift3Color: SingularColor;
+};
+
+export type WeightClassPayload = {
+  classTitle: string;
+  weightClass: string;
 };

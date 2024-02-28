@@ -24,7 +24,7 @@ export class RecordAttemptComp {
       case 'world':
       default:
         bgColor = '#a8911c';
-        textColor = '#000000';
+        textColor = '#FFFFFF';
         break;
     }
 

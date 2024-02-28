@@ -53,6 +53,7 @@ import {
   StateRecordWidget,
   WorldRecordWidget,
 } from '../compositions/audience/audience.recrods';
+import { StandingsSourceWidget } from '../compositions/audience/audience.standingsSource';
 
 export class AudienceScene {
   private readonly logger = new Logger(AudienceScene.name);
@@ -91,6 +92,8 @@ export class AudienceScene {
   nationalRecordWidget = new NationalRecordWidget();
   worldRecordWidget = new WorldRecordWidget();
 
+  standingsSourceWidget = new StandingsSourceWidget();
+
   private defaultLights: RefLights = {
     left: { decision: null },
     head: { decision: null },
@@ -102,11 +105,19 @@ export class AudienceScene {
   record: Record = null;
 
   async onClockStateChanged(e: ClockStateChangedEvent) {
+    if (e.platformID !== this.platformID) {
+      this.logger.warn(`${e.platformID} does not equal ${this.platformID}`);
+      return;
+    }
     const { currentState, clockDuration } = e;
     await this.updateTimer(clockDuration / 1000, currentState as ClockState);
   }
 
   async onRefLightsUpdated(e: RefLightUpdatedEvent) {
+    if (e.platformID !== this.platformID) {
+      this.logger.warn(`${e.platformID} does not equal ${this.platformID}`);
+      return;
+    }
     if (e.position === 'left') {
       this.lightState.left.decision = e.decision;
       this.lightState.left.cards = e.cards;
@@ -117,7 +128,6 @@ export class AudienceScene {
       this.lightState.right.decision = e.decision;
       this.lightState.right.cards = e.cards;
     }
-    this.logger.log(this.lightState);
     if (
       this.lightState.head.decision &&
       this.lightState.left.decision &&
@@ -127,29 +137,55 @@ export class AudienceScene {
     }
   }
 
+  previousFlight = '';
   async onCurrentAttemptUpdated(event: CurrentAttemptUpdatedEvent) {
+    if (event.meetID !== this.meetID || event.platformID !== this.platformID) {
+      this.logger.warn(`${event.meetID} does not equal ${this.meetID}`);
+      this.logger.warn(`${event.platformID} does not equal ${this.platformID}`);
+      return;
+    }
     // reset lights on attempt update
     this.lightState = this.defaultLights;
     this.record = null;
 
-    // if (event.platformID !== this.platformID && event.meetID !== this.meetID)
-    //   return;
-    //
     const meetDocument = event.meetDocument;
     const platform = meetDocument.platforms.find(
       (platform) => platform.id === event.platformID,
     );
 
-    // if (!platform.currentAttempt) {
-    //   this.logger.warn(
-    //     `currentAttempt is null ${this.meetID + ':' + this.platformID}`,
-    //   );
-    //   return;
-    // }
+    if (!platform.currentAttempt) {
+      this.logger.warn(
+        `currentAttempt is null ${this.meetID + ':' + this.platformID}`,
+      );
+      //update standings
+      const standingsSource: UpdateControlAppContentDTO = {
+        subCompositionId: this.standingsSourceWidget.compID,
+        payload: this.standingsSourceWidget.buildPayload(meetDocument),
+      };
+      await this.singularliveService.updateControlAppContent(
+        this.controlAppToken,
+        standingsSource,
+      );
+      return;
+    }
 
     const currentLifter = meetDocument.lifters.find(
       (lifter) => lifter.id === platform.currentAttempt.lifter.id,
     );
+
+    if (this.previousFlight !== currentLifter.flight) {
+      this.previousFlight = currentLifter.flight;
+      //update standings
+      const standingsSource: UpdateControlAppContentDTO = {
+        subCompositionId: this.standingsSourceWidget.compID,
+        payload: this.standingsSourceWidget.buildPayload(meetDocument),
+      };
+      await this.singularliveService.updateControlAppContent(
+        this.controlAppToken,
+        standingsSource,
+      );
+    }
+    //This isnt the right spot for this
     const divisions = currentLifter.divisions.map((lifterDivision) =>
       meetDocument.divisions.find(
         (division) => division.id === lifterDivision.divisionId,
@@ -217,7 +253,8 @@ export class AudienceScene {
       divisionNames,
       weightClass.name,
       equipmentLevel,
-      meetDocument.platforms[0].currentAttempt,
+      meetDocument.platforms.find((platform) => platform.id === this.platformID)
+        .currentAttempt,
       nextLifters[0],
     );
   }
@@ -259,7 +296,6 @@ export class AudienceScene {
 
     const liftIsGood = this.isLiftGoodViaLights(this.lightState);
     if (liftIsGood && this.record) {
-      this.logger.log('recordLevel', this.record.recordLevel);
       let compID = '';
       switch (this.record.recordLevel) {
         case 'state':
@@ -289,7 +325,6 @@ export class AudienceScene {
         });
       }
     }
-    this.logger.log(compositionUpdates);
     await this.singularliveService.updateControlAppContent(
       this.controlAppToken,
       compositionUpdates,
@@ -425,6 +460,7 @@ export class AudienceScene {
       },
       {
         subCompositionId: this.attempt1Widget.compID,
+        state: 'In',
         payload: this.attempt1Widget.buildAttemptPayload(
           lifts[0],
           currentAttempt.attemptNumber === '1',
@@ -432,6 +468,7 @@ export class AudienceScene {
       },
       {
         subCompositionId: this.attempt2Widget.compID,
+        state: 'In',
         payload: this.attempt2Widget.buildAttemptPayload(
           lifts[1],
           currentAttempt.attemptNumber === '2',
@@ -439,13 +476,13 @@ export class AudienceScene {
       },
       {
         subCompositionId: this.attempt3Widget.compID,
+        state: 'In',
         payload: this.attempt3Widget.buildAttemptPayload(
           lifts[2],
           currentAttempt.attemptNumber === '3',
         ),
       },
     ];
-
     await this.singularliveService.updateControlAppContent(
       this.controlAppToken,
       phase1Body,

@@ -16,6 +16,10 @@ export class LiftingcastEventListeners {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
+  @OnEvent('liftingcast.*')
+  onEvent(event: any) {
+    this.logger.log(event);
+  }
   // @OnEvent(LiftingcastEvents.CurrentAttemptUpdated, { async: true })
   // async handleCurrentAttemptUpdated(event: CurrentAttemptUpdatedEvent) {
   //   this.logger.log(LiftingcastEvents.CurrentAttemptUpdated);

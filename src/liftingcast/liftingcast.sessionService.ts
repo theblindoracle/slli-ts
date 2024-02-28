@@ -9,7 +9,7 @@ export class LiftingcastSessionService {
   constructor(
     private readonly liftingcastService: LiftingcastService,
     private readonly eventEmitter: EventEmitter2,
-  ) { }
+  ) {}
 
   private readonly sessions = new Array<LiftingcastSession>();
 
@@ -39,5 +39,5 @@ export class LiftingcastSessionService {
     this.logger.log(`created session for ${meetID}:${platformID}`);
   }
 
-  stopSession() { }
+  stopSession() {}
 }

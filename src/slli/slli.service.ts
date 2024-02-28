@@ -24,6 +24,7 @@ export class SessionManagerService {
       liftingcastPlatformID,
       liftingcastPassword,
       singularAppToken,
+      sceneType,
     } as SessionDetails;
 
     this.sessions.push(session);
@@ -49,4 +50,5 @@ type SessionDetails = {
   liftingcastPlatformID: string;
   liftingcastPassword: string;
   singularAppToken: string;
+  sceneType: number;
 };

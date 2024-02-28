@@ -35,8 +35,6 @@ export class SceneManagerService {
     meetID: string,
     platformID: string,
   ) {
-    this.logger.log('sceneType', typeof sceneType);
-    this.logger.log(sceneType === SceneType.Main);
     if (sceneType === SceneType.Main) {
       const mainScene = this.createMainScene(
         controlAppToken,
@@ -44,7 +42,10 @@ export class SceneManagerService {
         platformID,
       );
       this.scenes.push(mainScene);
-      this.logger.log('Main scene created', mainScene);
+
+      this.logger.log('Main scene created');
+      this.logger.log(mainScene.meetID);
+      this.logger.log(mainScene.platformID);
     } else if (sceneType === SceneType.Audience) {
       const audienceScene = this.createAudienceScene(
         controlAppToken,
@@ -52,7 +53,9 @@ export class SceneManagerService {
         platformID,
       );
       this.scenes.push(audienceScene);
-      this.logger.log('Audience scene created', audienceScene);
+      this.logger.log('Audience scene created');
+      this.logger.log(audienceScene.meetID);
+      this.logger.log(audienceScene.platformID);
     }
   }
 
@@ -65,29 +68,15 @@ export class SceneManagerService {
 
     this.eventEmmiter.on(
       LiftingcastEvents.CurrentAttemptUpdated,
-      (e: CurrentAttemptUpdatedEvent) => {
-        if (
-          e.meetID !== mainScene.meetID &&
-          e.platformID !== mainScene.platformID
-        ) {
-          this.logger.warn(
-            `MainScene: ${e.meetID} does not equal ${mainScene.meetID} and ${e.platformID} does not equal ${mainScene.platformID}`,
-          );
-          return;
-        }
-        mainScene.onCurrentAttemptUpdated(e);
+      async (e: CurrentAttemptUpdatedEvent) => {
+        await mainScene.onCurrentAttemptUpdated(e);
       },
+      { async: true },
     );
 
     this.eventEmmiter.on(
       LiftingcastEvents.ClockStateChanged,
       (e: ClockStateChangedEvent) => {
-        if (e.platformID !== mainScene.platformID) {
-          this.logger.warn(
-            `AudienceScene: ${e.platformID} does not equal ${mainScene.platformID}`,
-          );
-          return;
-        }
         mainScene.onClockStateChanged(e);
       },
     );
@@ -95,12 +84,6 @@ export class SceneManagerService {
     this.eventEmmiter.on(
       LiftingcastEvents.RefLightUpdatedEvent,
       (e: RefLightUpdatedEvent) => {
-        if (e.platformID !== mainScene.platformID) {
-          this.logger.warn(
-            `AudienceScene: ${e.platformID} does not equal ${mainScene.platformID}`,
-          );
-          return;
-        }
         mainScene.onRefLightsUpdated(e);
       },
     );
@@ -122,27 +105,16 @@ export class SceneManagerService {
 
     this.eventEmmiter.on(
       LiftingcastEvents.CurrentAttemptUpdated,
-      (e: CurrentAttemptUpdatedEvent) => {
-        if (
-          e.meetID !== audienceScene.meetID &&
-          e.platformID !== audienceScene.platformID
-        ) {
-          this.logger.warn(
-            `AudienceScene: ${e.meetID} does not equal ${audienceScene.meetID} and ${e.platformID} does not equal ${audienceScene.platformID}`,
-          );
-          return;
-        }
-        audienceScene.onCurrentAttemptUpdated(e);
+      async (e: CurrentAttemptUpdatedEvent) => {
+        await audienceScene.onCurrentAttemptUpdated(e);
       },
+      { async: true },
     );
 
     this.eventEmmiter.on(
       LiftingcastEvents.ClockStateChanged,
       (e: ClockStateChangedEvent) => {
         if (e.platformID !== audienceScene.platformID) {
-          this.logger.warn(
-            `AudienceScene: ${e.platformID} does not equal ${audienceScene.platformID}`,
-          );
           return;
         }
         audienceScene.onClockStateChanged(e);
@@ -152,13 +124,6 @@ export class SceneManagerService {
     this.eventEmmiter.on(
       LiftingcastEvents.RefLightUpdatedEvent,
       (e: RefLightUpdatedEvent) => {
-        if (e.platformID !== audienceScene.platformID) {
-          this.logger.warn(
-            `AudienceScene: ${e.platformID} does not equal ${audienceScene.platformID}`,
-          );
-          return;
-        }
-
         audienceScene.onRefLightsUpdated(e);
       },
     );

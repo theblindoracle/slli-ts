@@ -41,12 +41,13 @@ export class RankingsModel {
       includeScore: true,
     });
 
-    const searchResults = fuse.search(lcName);
-
-    this.logger.log(searchResults);
+    const searchResults = fuse.search(lcName).sort((a, b) => b.score - a.score);
 
     if (searchResults.length > 0) {
-      return searchResults[0].item;
+      if (searchResults[0].score > 0.75) {
+        this.logger.log(searchResults[0]);
+        return searchResults[0].item;
+      }
     }
 
     return null;
