@@ -10,7 +10,7 @@ export class NextLiftersComp {
 
 export type NextLiftersPayload = {
   ad: string;
-  adSpotVisibility: boolean;
+  'Ad Spot Visibility': boolean;
   adImageShift: number;
   numberBgColor: SingularColor;
   nextLifters: string[];
