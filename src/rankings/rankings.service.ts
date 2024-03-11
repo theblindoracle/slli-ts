@@ -8,30 +8,30 @@ import { RankingDTO } from './rankings.dto';
 export class RankingsService {
   constructor(
     @InjectRepository(Ranking)
-    private readonly recordsRepository: Repository<Ranking>,
+    private readonly rankingsRepository: Repository<Ranking>,
   ) { }
 
   create(record: RankingDTO) {
-    return this.recordsRepository.save(record);
+    return this.rankingsRepository.save(record);
   }
 
   update(id: number, record: RankingDTO) {
-    return this.recordsRepository.update(id, record);
+    return this.rankingsRepository.update(id, record);
   }
 
   findAll(): Promise<Ranking[]> {
-    return this.recordsRepository.find();
+    return this.rankingsRepository.find();
   }
 
   findById(id: number): Promise<Ranking | null> {
-    return this.recordsRepository.findOneBy({ id });
+    return this.rankingsRepository.findOneBy({ id });
   }
 
   findBy(options: FindOptionsWhere<Ranking>) {
-    return this.recordsRepository.findBy(options);
+    return this.rankingsRepository.findBy(options);
   }
 
   remove(id: number) {
-    return this.recordsRepository.delete(id);
+    return this.rankingsRepository.delete(id);
   }
 }
