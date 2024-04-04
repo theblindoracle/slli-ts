@@ -1,4 +1,5 @@
 import { AgeGroup, EquipmentLevel, Gender } from 'src/slli/slli.enteties';
+import { Lifter } from './liftingcast.enteties';
 
 export class LiftingcastDivisionDecoder {
   decode(liftingcastDivisionName: string): DivisionDetails {
@@ -191,3 +192,50 @@ type DivisionDetails = {
   equipmentLevel: EquipmentLevel;
   ageGroup: AgeGroup;
 };
+
+export class LiftingcastWeightClassDecoder {
+  maleWeightClasses: Array<number> = [
+    30, 35, 40, 44, 48, 52, 56, 60, 67.5, 75, 82.5, 90, 100, 110, 125, 140, 999,
+  ];
+
+  femaleWeightClasses: Array<number> = [
+    30, 35, 40, 44, 48, 52, 56, 60, 67.5, 75, 82.5, 90, 100, 999,
+  ];
+  docode(lifter: Lifter) {
+    if (lifter.gender.toUpperCase() === 'MALE') {
+      if (lifter.bodyWeight < 30) {
+        return '30';
+      }
+      if (lifter.bodyWeight > 140) {
+        return '140+';
+      }
+      for (let i = 1; i < this.maleWeightClasses.length - 2; i++) {
+        const lower = this.maleWeightClasses[i];
+        const upper = this.maleWeightClasses[i + 1];
+        if (this.isWithinBounds(lifter.bodyWeight, lower, upper)) {
+          return upper.toString();
+        }
+      }
+    }
+    if (lifter.gender.toUpperCase() === 'FEMALE') {
+      if (lifter.bodyWeight < 30) {
+        return '30';
+      }
+
+      if (lifter.bodyWeight > 100) {
+        return '100+';
+      }
+      for (let i = 1; i < this.femaleWeightClasses.length - 2; i++) {
+        const lower = this.femaleWeightClasses[i];
+        const upper = this.femaleWeightClasses[i + 1];
+        if (this.isWithinBounds(lifter.bodyWeight, lower, upper)) {
+          return upper.toString();
+        }
+      }
+    }
+  }
+
+  isWithinBounds(bodyWeight: number, lower: number, upper: number) {
+    return bodyWeight > lower && bodyWeight < upper;
+  }
+}
