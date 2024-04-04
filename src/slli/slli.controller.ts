@@ -16,8 +16,15 @@ export class SlliController {
     @Query('platformID') platformID: string,
     @Query('password') password: string,
     @Query('token') token: string,
+    @Query('sceneType') sceneType: string,
   ) {
-    this.slliService.startSession(meetID, platformID, password, token);
+    this.slliService.startSession(
+      meetID,
+      platformID,
+      password,
+      token,
+      +sceneType,
+    );
   }
 
   @Post('generate')

@@ -1,4 +1,5 @@
 import { AgeGroup, EquipmentLevel, Gender } from 'src/slli/slli.enteties';
+import { Lifter } from './liftingcast.enteties';
 
 export class LiftingcastDivisionDecoder {
   decode(liftingcastDivisionName: string): DivisionDetails {
@@ -55,22 +56,22 @@ export class LiftingcastDivisionDecoder {
     const juniorRegex = /Junior/;
     const openRegex = /Open/;
     const masterRegex = /(?!Master [ABI])(Master)/;
-    const master1Regex = /(?!Master I[AB])(Master I)/;
+    const master1Regex = /(?!Master I[AB])(Master I\b)/;
     const master1aRegex = /Master IA/;
     const master1bRegex = /Master IB/;
-    const master2Regex = /(?!Master II[AB])(Master II)/;
+    const master2Regex = /(?!Master II[AB])(Master II\b)/;
     const master2aRegex = /Master IIA/;
     const master2bRegex = /Master IIB/;
-    const master3Regex = /(?!Master III[AB])(Master III)/;
+    const master3Regex = /(?!Master III[AB])(Master III\b)/;
     const master3aRegex = /Master IIIA/;
     const master3bRegex = /Master IIIB/;
-    const master4Regex = /(?!Master IV[AB])(Master IV)/;
+    const master4Regex = /(?!Master IV[AB])(Master IV\b)/;
     const master4aRegex = /Master IVA/;
     const master4bRegex = /Master IVB/;
-    const master5Regex = /(?!Master V[AB])(Master V)/;
+    const master5Regex = /(?!Master V[AB])(Master V\b)/;
     const master5aRegex = /Master VA/;
     const master5bRegex = /Master VB/;
-    const master6Regex = /(?!Master VI[AB])(Master VI)/;
+    const master6Regex = /(?!Master VI[AB])(Master VI\b)/;
     const master6aRegex = /Master VIA/;
     const master6bRegex = /Master VIB/;
     const guestRegex = /Guest/;
@@ -191,3 +192,50 @@ type DivisionDetails = {
   equipmentLevel: EquipmentLevel;
   ageGroup: AgeGroup;
 };
+
+export class LiftingcastWeightClassDecoder {
+  maleWeightClasses: Array<number> = [
+    30, 35, 40, 44, 48, 52, 56, 60, 67.5, 75, 82.5, 90, 100, 110, 125, 140, 999,
+  ];
+
+  femaleWeightClasses: Array<number> = [
+    30, 35, 40, 44, 48, 52, 56, 60, 67.5, 75, 82.5, 90, 100, 999,
+  ];
+  docode(lifter: Lifter) {
+    if (lifter.gender.toUpperCase() === 'MALE') {
+      if (lifter.bodyWeight < 30) {
+        return '30';
+      }
+      if (lifter.bodyWeight > 140) {
+        return '140+';
+      }
+      for (let i = 1; i < this.maleWeightClasses.length - 2; i++) {
+        const lower = this.maleWeightClasses[i];
+        const upper = this.maleWeightClasses[i + 1];
+        if (this.isWithinBounds(lifter.bodyWeight, lower, upper)) {
+          return upper.toString();
+        }
+      }
+    }
+    if (lifter.gender.toUpperCase() === 'FEMALE') {
+      if (lifter.bodyWeight < 30) {
+        return '30';
+      }
+
+      if (lifter.bodyWeight > 100) {
+        return '100+';
+      }
+      for (let i = 1; i < this.femaleWeightClasses.length - 2; i++) {
+        const lower = this.femaleWeightClasses[i];
+        const upper = this.femaleWeightClasses[i + 1];
+        if (this.isWithinBounds(lifter.bodyWeight, lower, upper)) {
+          return upper.toString();
+        }
+      }
+    }
+  }
+
+  isWithinBounds(bodyWeight: number, lower: number, upper: number) {
+    return bodyWeight > lower && bodyWeight < upper;
+  }
+}

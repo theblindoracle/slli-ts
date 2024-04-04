@@ -82,10 +82,10 @@ export class RecordsModel {
         )
         .sort((a, b) => b.weight - a.weight);
 
-      this.logger.debug('total records');
-      this.logger.debug(totalWorldRecords);
-      this.logger.debug(totalAmericanRecords);
-      this.logger.debug(totalStateRecords);
+      // this.logger.debug('total records');
+      // this.logger.debug(totalWorldRecords);
+      // this.logger.debug(totalAmericanRecords);
+      // this.logger.debug(totalStateRecords);
       if (totalWorldRecords.length > 0) {
         return totalWorldRecords[0];
       }

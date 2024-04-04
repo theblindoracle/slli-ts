@@ -10,6 +10,12 @@ import {
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { RecordsModel } from 'src/records/records.model';
 import { RankingsModel } from 'src/rankings/rankings.model';
+import { AudienceScene } from './scenes/scene.audience';
+
+export enum SceneType {
+  Main,
+  Audience,
+}
 
 @Injectable()
 export class SceneManagerService {
@@ -21,12 +27,36 @@ export class SceneManagerService {
     private readonly eventEmmiter: EventEmitter2,
   ) {}
 
-  private readonly scenes = new Array<MainScene>();
+  private readonly scenes = [];
 
-  async addScene(controlAppToken: string, meetID: string, platformID: string) {
-    const mainScene = this.createMainScene(controlAppToken, meetID, platformID);
+  addScene(
+    controlAppToken: string,
+    sceneType: SceneType,
+    meetID: string,
+    platformID: string,
+  ) {
+    if (sceneType === SceneType.Main) {
+      const mainScene = this.createMainScene(
+        controlAppToken,
+        meetID,
+        platformID,
+      );
+      this.scenes.push(mainScene);
 
-    this.scenes.push(mainScene);
+      this.logger.log('Main scene created');
+      this.logger.log(mainScene.meetID);
+      this.logger.log(mainScene.platformID);
+    } else if (sceneType === SceneType.Audience) {
+      const audienceScene = this.createAudienceScene(
+        controlAppToken,
+        meetID,
+        platformID,
+      );
+      this.scenes.push(audienceScene);
+      this.logger.log('Audience scene created');
+      this.logger.log(audienceScene.meetID);
+      this.logger.log(audienceScene.platformID);
+    }
   }
 
   createMainScene(controlAppToken: string, meetID: string, platformID: string) {
@@ -34,13 +64,14 @@ export class SceneManagerService {
       this.singularliveService,
       this.recordModel,
       this.rankingsModel,
-    ).init(controlAppToken, meetID, platformID);
+    ).init(meetID, platformID, controlAppToken);
 
     this.eventEmmiter.on(
       LiftingcastEvents.CurrentAttemptUpdated,
-      (event: CurrentAttemptUpdatedEvent) => {
-        mainScene.onCurrentAttemptUpdated(event);
+      async (e: CurrentAttemptUpdatedEvent) => {
+        await mainScene.onCurrentAttemptUpdated(e);
       },
+      { async: true },
     );
 
     this.eventEmmiter.on(
@@ -53,16 +84,46 @@ export class SceneManagerService {
     this.eventEmmiter.on(
       LiftingcastEvents.RefLightUpdatedEvent,
       (e: RefLightUpdatedEvent) => {
-        // if (e.platformID !== platformID) {
-        //   this.logger.warn(
-        //     `${e.platformID} does not equal ${mainScene.platformID}`,
-        //   );
-        //   return;
-        // }
-
         mainScene.onRefLightsUpdated(e);
       },
     );
     return mainScene;
+  }
+  createAudienceScene(
+    controlAppToken: string,
+    meetID: string,
+    platformID: string,
+  ) {
+    const audienceScene = new AudienceScene(
+      this.singularliveService,
+      this.recordModel,
+      this.rankingsModel,
+      controlAppToken,
+      meetID,
+      platformID,
+    );
+
+    this.eventEmmiter.on(
+      LiftingcastEvents.CurrentAttemptUpdated,
+      async (e: CurrentAttemptUpdatedEvent) => {
+        await audienceScene.onCurrentAttemptUpdated(e);
+      },
+      { async: true },
+    );
+
+    this.eventEmmiter.on(
+      LiftingcastEvents.ClockStateChanged,
+      (e: ClockStateChangedEvent) => {
+        audienceScene.onClockStateChanged(e);
+      },
+    );
+
+    this.eventEmmiter.on(
+      LiftingcastEvents.RefLightUpdatedEvent,
+      (e: RefLightUpdatedEvent) => {
+        audienceScene.onRefLightsUpdated(e);
+      },
+    );
+    return audienceScene;
   }
 }

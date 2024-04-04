@@ -16,11 +16,9 @@ import {
   CurrentAttemptUpdatedEvent,
   RefLightUpdatedEvent,
 } from 'src/liftingcast/liftingcast.event';
-import { MainAthleteBottomBar } from '../compositions/mainAthleteBottomBar';
 import { LightInfractionPayload, LightsComp } from '../compositions/lights';
 import { ShortTimerComp } from '../compositions/shortTimer';
 import { NextLiftersComp } from '../compositions/nextLifters';
-import { WeightClassComp } from '../compositions/weightClass';
 import { delay } from '../singularlive.utils';
 import {
   SecondAttemptStingerComp,
@@ -31,6 +29,10 @@ import { SuccessfulRecordComp } from '../compositions/successfulRecord';
 import { RecordsModel } from 'src/records/records.model';
 import { Record } from 'src/records/records.entity';
 import { RankingsModel } from 'src/rankings/rankings.model';
+import { Ranking } from 'src/rankings/rankings.entity';
+import { ExpMainAthleteBottomBar } from '../compositions/expMainAthleteBottomBar';
+import { LiftingcastDivisionDecoder } from 'src/liftingcast/liftingcast.decoder';
+import { StandingsSourceWidget } from '../compositions/standingsSource';
 
 export class MainScene {
   private readonly logger = new Logger(MainScene.name);
@@ -39,21 +41,22 @@ export class MainScene {
     private readonly singularliveService: SingularliveService,
     private readonly recordsModel: RecordsModel,
     private readonly rankingsModel: RankingsModel,
-  ) {}
+  ) { }
 
   meetID: string;
   platformID: string;
-  private controlAppToken: string;
+  controlAppToken: string;
 
-  private readonly mainAthleteBottomBarComp = new MainAthleteBottomBar();
+  private readonly mainAthleteBottomBarComp = new ExpMainAthleteBottomBar();
   private readonly lightsComp = new LightsComp();
   private readonly shortTimerComp = new ShortTimerComp();
   private readonly nextLiftersComp = new NextLiftersComp();
-  private readonly weightClassComp = new WeightClassComp();
   private readonly secondAttemptStingerComp = new SecondAttemptStingerComp();
   private readonly thirdAttemptStingerComp = new ThirdAttemptStingerComp();
   private readonly recordAttemptComp = new RecordAttemptComp();
   private readonly successfulRecordComp = new SuccessfulRecordComp();
+
+  standingsSourceWidget = new StandingsSourceWidget();
 
   init(meetID: string, platformID: string, controlAppToken: string) {
     this.meetID = meetID;
@@ -63,6 +66,9 @@ export class MainScene {
   }
 
   async onClockStateChanged(e: ClockStateChangedEvent) {
+    if (e.meetID !== this.meetID || e.platformID !== this.platformID) {
+      return;
+    }
     const { currentState, clockDuration } = e;
     await this.updateTimer(clockDuration / 1000, currentState as ClockState);
   }
@@ -90,6 +96,9 @@ export class MainScene {
   lightState: RefLights = this.initialLights;
 
   async onRefLightsUpdated(e: RefLightUpdatedEvent) {
+    if (e.meetID !== this.meetID || e.platformID !== this.platformID) {
+      return;
+    }
     if (e.position === 'left') {
       this.lightState.left.decision = e.decision;
       this.lightState.left.cards = e.cards;
@@ -180,9 +189,13 @@ export class MainScene {
   }
 
   record: Record = null;
-
+  previousFlight = null;
   async onCurrentAttemptUpdated(event: CurrentAttemptUpdatedEvent) {
     // reset lights on attempt update
+    if (event.meetID !== this.meetID || event.platformID !== this.platformID) {
+      return;
+    }
+
     this.lightState = this.initialLights;
     this.record = null;
 
@@ -198,13 +211,34 @@ export class MainScene {
       this.logger.warn(
         `currentAttempt is null ${this.meetID + ':' + this.platformID}`,
       );
+      //update standings
+      const standingsSource: UpdateControlAppContentDTO = {
+        subCompositionId: this.standingsSourceWidget.compID,
+        payload: this.standingsSourceWidget.buildPayload(meetDocument),
+      };
+      await this.singularliveService.updateControlAppContent(
+        this.controlAppToken,
+        standingsSource,
+      );
       return;
     }
-
     const currentLifter = meetDocument.lifters.find(
       (lifter) => lifter.id === platform.currentAttempt.lifter.id,
     );
 
+    if (this.previousFlight !== currentLifter.flight) {
+      this.previousFlight = currentLifter.flight;
+      //update standings
+      const standingsSource: UpdateControlAppContentDTO = {
+        subCompositionId: this.standingsSourceWidget.compID,
+        payload: this.standingsSourceWidget.buildPayload(meetDocument),
+      };
+
+      await this.singularliveService.updateControlAppContent(
+        this.controlAppToken,
+        standingsSource,
+      );
+    }
     const division = meetDocument.divisions.find(
       (division) => division.id === currentLifter.divisions[0].divisionId,
     );
@@ -246,10 +280,13 @@ export class MainScene {
 
     await this.playAttemptChange(
       currentLifter,
-      meetDocument.platforms[0].currentAttempt,
-      `${division.name} - ${weightClass.name} `,
+      meetDocument.platforms.find((platform) => platform.id === this.platformID)
+        .currentAttempt,
+      division.name,
+      weightClass.name,
       nextLifters,
       this.record,
+      ranking,
     );
   }
 
@@ -260,8 +297,10 @@ export class MainScene {
     currentLifter: Lifter,
     currentAttempt: Attempt,
     divisionName: string,
+    weightClassName: string,
     nextLifters: string[],
     currentAttemptRecord: Record,
+    currentLifterRanking?: Ranking,
   ) {
     const phase1Updates: UpdateControlAppContentDTO[] = [];
     const phase2Updates: UpdateControlAppContentDTO[] = [];
@@ -297,19 +336,19 @@ export class MainScene {
         this.mainAthleteBottomBarComp.mainAthleteBottomBarCompID,
       payload: this.mainAthleteBottomBarComp.buildMainAtleteBottomBarPayload(
         currentLifter,
+        currentLifterRanking,
         currentAttempt,
       ),
     });
-    phase1Updates.push({
-      subCompositionId: this.weightClassComp.compID,
-      payload: { classTitle: divisionName },
-      state: 'In',
-    });
 
-    // phase2Updates.push({
-    //   subCompositionId: this.weightClassComp.compID,
-    //   state: 'Out',
-    // });
+    const decoded = new LiftingcastDivisionDecoder().decode(divisionName);
+    phase1Updates.push({
+      subCompositionId: this.mainAthleteBottomBarComp.weightClassCompID,
+      payload: this.mainAthleteBottomBarComp.buildWeightClassPayload(
+        decoded.ageGroup,
+        weightClassName,
+      ),
+    });
 
     if (this.nextLifterCounter === 3) {
       phase1Updates.push({
