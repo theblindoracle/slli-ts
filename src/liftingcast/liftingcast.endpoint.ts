@@ -50,35 +50,39 @@ export class LiftingcastEndpoint {
       );
   }
 
-  getMeet(meetId: string) {
+  getMeet(meetId: string, password: string) {
     const url = `${this.apiBaseUrl}/meets/${meetId}`;
 
-    return this.httpService.get(url).pipe(
-      retry({
-        count: 3,
-        delay: (error, retryCount) => {
-          if (
-            isAxiosError(error) &&
-            error.response.status === HttpStatus.TOO_MANY_REQUESTS
-          ) {
-            this.logger.warn('Too Many Requests');
+    return this.httpService
+      .get(url, {
+        headers: { Authorization: 'Basic ' + btoa(`${meetId}:${password}`) },
+      })
+      .pipe(
+        retry({
+          count: 3,
+          delay: (error, retryCount) => {
+            if (
+              isAxiosError(error) &&
+              error.response.status === HttpStatus.TOO_MANY_REQUESTS
+            ) {
+              this.logger.warn('Too Many Requests');
 
-            const backoffTimeMs =
-              error.response.data?.additionalInfo?.msBeforeNext;
-            const backoff = backoffTimeMs ?? retryCount * 5000;
+              const backoffTimeMs =
+                error.response.data?.additionalInfo?.msBeforeNext;
+              const backoff = backoffTimeMs ?? retryCount * 5000;
 
-            this.logger.warn('backoffTimeMs', backoff);
-            return timer(backoff);
-          }
-        },
-      }),
-      catchError((error) => {
-        this.logger.error('getMeet');
-        this.logger.error(meetId);
-        this.logger.error(error);
-        this.logger.error(new Error().stack);
-        throw error;
-      }),
-    );
+              this.logger.warn('backoffTimeMs', backoff);
+              return timer(backoff);
+            }
+          },
+        }),
+        catchError((error) => {
+          this.logger.error('getMeet');
+          this.logger.error(meetId);
+          this.logger.error(error);
+          this.logger.error(new Error().stack);
+          throw error;
+        }),
+      );
   }
 }

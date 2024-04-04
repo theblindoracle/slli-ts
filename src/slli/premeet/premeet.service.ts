@@ -31,9 +31,12 @@ export class SlliPreMeetService {
   ) {}
 
   private readonly divisionDecoder = new LiftingcastDivisionDecoder();
-  async generatePreMeetReport(meetID: string) {
+  async generatePreMeetReport(meetID: string, password: string) {
     // get roster and their divisions from liftingcast
-    const liftingcastData = await this.liftingcastService.getMeetData(meetID);
+    const liftingcastData = await this.liftingcastService.getMeetData(
+      meetID,
+      password,
+    );
 
     let getRecordsDTOs: Array<GetRecordsDTO> = [];
 

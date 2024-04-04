@@ -9,11 +9,11 @@ export class LiftingcastService {
   private readonly logger = new Logger(LiftingcastService.name);
   private abortController: AbortController = new AbortController();
 
-  constructor(private liftingcastEndpoint: LiftingcastEndpoint) {}
+  constructor(private liftingcastEndpoint: LiftingcastEndpoint) { }
 
-  async getMeetData(meetId: string): Promise<MeetDocument> {
+  async getMeetData(meetId: string, password: string): Promise<MeetDocument> {
     const response = await firstValueFrom(
-      this.liftingcastEndpoint.getMeet(meetId),
+      this.liftingcastEndpoint.getMeet(meetId, password),
     );
 
     const data = this.transformMeetData(response.data);

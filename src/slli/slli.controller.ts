@@ -28,7 +28,10 @@ export class SlliController {
   }
 
   @Post('generate')
-  generate(@Query('meetID') meetID: string) {
-    return this.premeetService.generatePreMeetReport(meetID);
+  generate(
+    @Query('meetID') meetID: string,
+    @Query('password') password: string,
+  ) {
+    return this.premeetService.generatePreMeetReport(meetID, password);
   }
 }

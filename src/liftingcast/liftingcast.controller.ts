@@ -5,18 +5,8 @@ import { LiftingcastService } from './liftingcast.service';
 export class LiftingcastController {
   constructor(private liftingcastService: LiftingcastService) {}
 
-  @Get('start')
-  async start() {
-    // this.liftingcastService.start();
-  }
-
-  @Get('stop')
-  async stop() {
-    // this.liftingcastService.stop();
-  }
-
   @Get('meet')
   async getMeet() {
-    // return this.liftingcastService.getMeetData();
+    return this.liftingcastService.getMeetData('mrbnhnayoz5e', 'test');
   }
 }

@@ -74,6 +74,7 @@ export class LiftingcastSession {
         ) {
           const meetDocument = await this.liftingcastService.getMeetData(
             this.meetID,
+            this.password,
           );
           const event = new CurrentAttemptUpdatedEvent({
             meetID: this.meetID,

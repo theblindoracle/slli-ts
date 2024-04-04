@@ -38,6 +38,7 @@ export type LightDoc = {
 
 export class Lifter {
   id: string;
+  memberNumner: string;
   name: string;
   gender: string;
   team: string;
