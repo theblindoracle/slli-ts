@@ -17,11 +17,10 @@ export class LiftingcastSession {
     public meetID: string,
     public platformID: string,
     private readonly password: string,
-  ) {}
+  ) { }
 
   private lock: object;
   lastUpdate: Date;
-
   stopPoll() {
     this.lock = null;
   }
@@ -94,15 +93,10 @@ export class LiftingcastSession {
           platformDoc.clockState !== previousClockState ||
           previousClockTimerLength !== platformDoc.clockTimerLength
         ) {
-          this.logger.log('updating clockState', {
-            platformID: this.platformID,
-            previousState: previousClockState,
-            currentState: platformDoc.clockState,
-            clockDuration: platformDoc.clockTimerLength,
-          });
           this.eventEmitter.emit(
             LiftingcastEvents.ClockStateChanged,
             new ClockStateChangedEvent({
+              meetID: this.meetID,
               platformID: this.platformID,
               previousState: previousClockState,
               currentState: platformDoc.clockState,
@@ -123,6 +117,7 @@ export class LiftingcastSession {
         this.eventEmitter.emit(
           LiftingcastEvents.RefLightUpdatedEvent,
           new RefLightUpdatedEvent({
+            meetID: this.meetID,
             platformID: lightDoc.platformId,
             position: lightDoc.position,
             decision: lightDoc.decision,

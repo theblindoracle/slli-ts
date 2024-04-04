@@ -114,9 +114,6 @@ export class SceneManagerService {
     this.eventEmmiter.on(
       LiftingcastEvents.ClockStateChanged,
       (e: ClockStateChangedEvent) => {
-        if (e.platformID !== audienceScene.platformID) {
-          return;
-        }
         audienceScene.onClockStateChanged(e);
       },
     );

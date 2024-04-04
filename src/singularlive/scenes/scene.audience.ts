@@ -105,8 +105,7 @@ export class AudienceScene {
   record: Record = null;
 
   async onClockStateChanged(e: ClockStateChangedEvent) {
-    if (e.platformID !== this.platformID) {
-      this.logger.warn(`${e.platformID} does not equal ${this.platformID}`);
+    if (e.meetID !== this.meetID || e.platformID !== this.platformID) {
       return;
     }
     const { currentState, clockDuration } = e;
@@ -114,8 +113,7 @@ export class AudienceScene {
   }
 
   async onRefLightsUpdated(e: RefLightUpdatedEvent) {
-    if (e.platformID !== this.platformID) {
-      this.logger.warn(`${e.platformID} does not equal ${this.platformID}`);
+    if (e.meetID !== this.meetID || e.platformID !== this.platformID) {
       return;
     }
     if (e.position === 'left') {
@@ -140,8 +138,6 @@ export class AudienceScene {
   previousFlight = '';
   async onCurrentAttemptUpdated(event: CurrentAttemptUpdatedEvent) {
     if (event.meetID !== this.meetID || event.platformID !== this.platformID) {
-      this.logger.warn(`${event.meetID} does not equal ${this.meetID}`);
-      this.logger.warn(`${event.platformID} does not equal ${this.platformID}`);
       return;
     }
     // reset lights on attempt update

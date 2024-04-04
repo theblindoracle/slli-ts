@@ -18,6 +18,7 @@ export enum LiftingcastEvents {
 }
 
 export class RefLightUpdatedEvent extends Event<RefLightUpdatedEvent> {
+  meetID: string;
   platformID: string;
   position: string;
   decision: RefDecision;
@@ -31,6 +32,7 @@ export class CurrentAttemptUpdatedEvent extends Event<CurrentAttemptUpdatedEvent
 }
 
 export class ClockStateChangedEvent extends Event<ClockStateChangedEvent> {
+  meetID: string;
   platformID: string;
   previousState: string;
   currentState: string;
