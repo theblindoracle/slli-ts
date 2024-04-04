@@ -16,7 +16,6 @@ import {
   CurrentAttemptUpdatedEvent,
   RefLightUpdatedEvent,
 } from 'src/liftingcast/liftingcast.event';
-import { MainAthleteBottomBar } from '../compositions/mainAthleteBottomBar';
 import { LightInfractionPayload, LightsComp } from '../compositions/lights';
 import { ShortTimerComp } from '../compositions/shortTimer';
 import { NextLiftersComp } from '../compositions/nextLifters';
@@ -42,11 +41,11 @@ export class MainScene {
     private readonly singularliveService: SingularliveService,
     private readonly recordsModel: RecordsModel,
     private readonly rankingsModel: RankingsModel,
-  ) {}
+  ) { }
 
   meetID: string;
   platformID: string;
-  private controlAppToken: string;
+  controlAppToken: string;
 
   private readonly mainAthleteBottomBarComp = new ExpMainAthleteBottomBar();
   private readonly lightsComp = new LightsComp();
@@ -212,17 +211,22 @@ export class MainScene {
       this.logger.warn(
         `currentAttempt is null ${this.meetID + ':' + this.platformID}`,
       );
+      //update standings
+      const standingsSource: UpdateControlAppContentDTO = {
+        subCompositionId: this.standingsSourceWidget.compID,
+        payload: this.standingsSourceWidget.buildPayload(meetDocument),
+      };
+      await this.singularliveService.updateControlAppContent(
+        this.controlAppToken,
+        standingsSource,
+      );
       return;
     }
-
     const currentLifter = meetDocument.lifters.find(
       (lifter) => lifter.id === platform.currentAttempt.lifter.id,
     );
 
-    if (
-      this.previousFlight !== currentLifter.flight ||
-      platform.currentAttempt === null
-    ) {
+    if (this.previousFlight !== currentLifter.flight) {
       this.previousFlight = currentLifter.flight;
       //update standings
       const standingsSource: UpdateControlAppContentDTO = {

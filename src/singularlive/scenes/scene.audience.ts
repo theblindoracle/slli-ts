@@ -28,6 +28,7 @@ import {
   ClockState,
   Lift,
   Lifter,
+  MeetDocument,
   RefLights,
 } from 'src/liftingcast/liftingcast.enteties';
 import { UpdateControlAppContentDTO } from '../singularlive.dtos';
@@ -54,6 +55,7 @@ import {
   WorldRecordWidget,
 } from '../compositions/audience/audience.recrods';
 import { StandingsSourceWidget } from '../compositions/audience/audience.standingsSource';
+import { SquatStandingsWidget } from '../compositions/audience/audience.standings';
 
 export class AudienceScene {
   private readonly logger = new Logger(AudienceScene.name);
@@ -61,10 +63,10 @@ export class AudienceScene {
     private readonly singularliveService: SingularliveService,
     private readonly recordsModel: RecordsModel,
     private readonly rankingsModel: RankingsModel,
-    private controlAppToken: string,
+    public controlAppToken: string,
     public meetID: string,
     public platformID: string,
-  ) {}
+  ) { }
 
   rootWidget = new RootWidget();
 
@@ -192,16 +194,6 @@ export class AudienceScene {
       (division) =>
         new LiftingcastDivisionDecoder().decode(division.name).ageGroup,
     );
-
-    // const division = meetDocument.divisions.find(
-    //   (division) => division.id === currentLifter.divisions[0].divisionId,
-    // );
-
-    // const weightClasses = currentLifter.divisions.map((division) =>
-    //   divisions.find(
-    //     (weightClass) => weightClass.id === division.weightClassId,
-    //   ),
-    // );
 
     this.logger.log(divisionNames);
     const weightClass = divisions[0].weightClasses.find(
@@ -339,9 +331,9 @@ export class AudienceScene {
   private isLiftGoodViaLights(lightState: RefLights) {
     return isRefDecisionGood(lightState.left.decision)
       ? isRefDecisionGood(lightState.head.decision) ||
-          isRefDecisionGood(lightState.right.decision)
+      isRefDecisionGood(lightState.right.decision)
       : isRefDecisionGood(lightState.head.decision) &&
-          isRefDecisionGood(lightState.right.decision);
+      isRefDecisionGood(lightState.right.decision);
   }
 
   async playAttemptNumberChange(attemptNumber: string) {
@@ -544,6 +536,30 @@ export class AudienceScene {
     await this.singularliveService.updateControlAppContent(
       this.controlAppToken,
       phase3Body,
+    );
+  }
+
+  squatStandingsWidget = new SquatStandingsWidget();
+  async playStandingsGraphic(meetDocument: MeetDocument) {
+    // update source
+
+    const standingsSource: UpdateControlAppContentDTO = {
+      subCompositionId: this.standingsSourceWidget.compID,
+      payload: this.standingsSourceWidget.buildPayload(meetDocument),
+    };
+
+    await this.singularliveService.updateControlAppContent(
+      this.controlAppToken,
+      standingsSource,
+    );
+    //play in overlay
+    await this.singularliveService.updateControlAppContent(
+      this.controlAppToken,
+      {
+        subCompositionId: this.squatStandingsWidget.compID,
+        payload: { lastUpdate: new Date() },
+        state: 'In',
+      },
     );
   }
 }
