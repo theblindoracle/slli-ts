@@ -34,4 +34,9 @@ export class SlliController {
   ) {
     return this.premeetService.generatePreMeetReport(meetID, password);
   }
+
+  @Post('generateRecords')
+  storeRecords() {
+    // return this.premeetService.getRecords();
+  }
 }
