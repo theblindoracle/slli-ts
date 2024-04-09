@@ -1,6 +1,17 @@
-import { Controller, Logger, Param, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Logger,
+  Post,
+  Query,
+  Render,
+  UsePipes,
+  ValidationPipe,
+} from '@nestjs/common';
 import { SessionManagerService } from './slli.service';
 import { SlliPreMeetService } from './premeet/premeet.service';
+import { GetRecordsDTO } from './slli.dtos';
 
 @Controller('slli')
 export class SlliController {
@@ -35,8 +46,17 @@ export class SlliController {
     return this.premeetService.generatePreMeetReport(meetID, password);
   }
 
+  @Get()
+  @Render('premeet')
+  root() {}
+
   @Post('generateRecords')
-  storeRecords() {
-    // return this.premeetService.getRecords();
+  @UsePipes(new ValidationPipe({ transform: true }))
+  storeRecords(@Body() getRecordsDTO: GetRecordsDTO) {
+    return this.premeetService.getRecords(
+      getRecordsDTO.equipmentLevels,
+      getRecordsDTO.recordLevels,
+      getRecordsDTO.divisions,
+    );
   }
 }

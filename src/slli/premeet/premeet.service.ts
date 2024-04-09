@@ -250,139 +250,105 @@ export class SlliPreMeetService {
 
     // const equipmentLevels: Array<EquipmentLevelOptions> = ['raw', 'equipped'];
 
-    const maleWeightClasses: Array<WeightClassOptions> = [
-      '-30',
-      '-35',
-      '-40',
-      '-44',
-      '-48',
-      '-52',
-      '-56',
-      '-60',
-      '-67.5',
-      '-75',
-      '-82.5',
-      '-90',
-      '-100',
-      '-110',
-      '-125',
-      '-140',
-      '140+',
-    ];
-
-    const femaleWeightClasses: Array<WeightClassOptions> = [
-      '-30',
-      '-35',
-      '-40',
-      '-44',
-      '-48',
-      '-52',
-      '-56',
-      '-60',
-      '-67.5',
-      '-75',
-      '-82.5',
-      '-90',
-      '-100',
-      '100+',
-    ];
+    // const maleWeightClasses: Array<WeightClassOptions> = [
+    //   '-30',
+    //   '-35',
+    //   '-40',
+    //   '-44',
+    //   '-48',
+    //   '-52',
+    //   '-56',
+    //   '-60',
+    //   '-67.5',
+    //   '-75',
+    //   '-82.5',
+    //   '-90',
+    //   '-100',
+    //   '-110',
+    //   '-125',
+    //   '-140',
+    //   '140+',
+    // ];
+    //
+    // const femaleWeightClasses: Array<WeightClassOptions> = [
+    //   '-30',
+    //   '-35',
+    //   '-40',
+    //   '-44',
+    //   '-48',
+    //   '-52',
+    //   '-56',
+    //   '-60',
+    //   '-67.5',
+    //   '-75',
+    //   '-82.5',
+    //   '-90',
+    //   '-100',
+    //   '100+',
+    // ];
 
     for (const division of divisions) {
       for (const recordLevel of recordLevels) {
         for (const equipmentLevel of equipmentLevels) {
-          for (const weightClass of maleWeightClasses) {
-            getRecordsDTOs.push({
-              equipmentLevel: equipmentLevel,
-              weightClass: weightClass,
-              division: division,
-              sex: 'm',
-              recordLevel: recordLevel,
-              // state: ''
-            });
-          }
+          // for (const weightClass of maleWeightClasses) {
+          getRecordsDTOs.push({
+            equipmentLevel: equipmentLevel,
+            // weightClass: weightClass,
+            division: division,
+            // sex: 'm',
+            recordLevel: recordLevel,
+            // state: ''
+          });
+          // }
 
-          for (const weightClass of femaleWeightClasses) {
-            getRecordsDTOs.push({
-              equipmentLevel: equipmentLevel,
-              weightClass: weightClass,
-              division: division,
-              sex: 'f',
-              recordLevel: recordLevel,
-              // state: ''
-            });
-          }
+          // for (const weightClass of femaleWeightClasses) {
+          // getRecordsDTOs.push({
+          //   equipmentLevel: equipmentLevel,
+          //   weightClass: weightClass,
+          //   division: division,
+          //   sex: 'f',
+          //   recordLevel: recordLevel,
+          //   // state: ''
+          // });
+          // }
         }
       }
     }
-    this.logger.debug(getRecordsDTOs);
-    // get roster and their divisions from liftingcast
-    // const liftingcastData = await this.liftingcastService.getMeetData(
-    //   meetID,
-    //   password,
-    // );
-    //
-    // let getRecordsDTOs: Array<GetRecordsDTO> = [];
-    //
-    // for (const lifter of liftingcastData.lifters) {
-    //   //translate liftingcast to USAPL
-    //
-    //   lifter.divisions.forEach((division) => {
-    //     const divisionDetails = liftingcastData.divisions.find(
-    //       (divisionDetails) => divisionDetails.id === division.divisionId,
-    //     );
-    //
-    //     const recordDTO = this.generateRecordDTO(
-    //       division,
-    //       divisionDetails,
-    //       lifter.state,
-    //     );
-    //     getRecordsDTOs.push(...recordDTO);
-    //   });
-    // }
-    //
-    // getRecordsDTOs = getRecordsDTOs.filter(
-    //   (obj, index) =>
-    //     getRecordsDTOs.findIndex(
-    //       (dto) =>
-    //         dto.state === obj.state &&
-    //         dto.sex === obj.sex &&
-    //         dto.division === obj.division &&
-    //         dto.recordLevel === obj.recordLevel &&
-    //         dto.weightClass === obj.weightClass &&
-    //         dto.equipmentLevel === obj.equipmentLevel,
-    //     ) === index,
-    // );
 
     // get records from usapl database
 
-    // for (const getRecordDTO of getRecordsDTOs) {
-    //   const usaplRecords = await this.usaplService.getRecords(getRecordDTO);
-    //
-    //   if (usaplRecords.length === 0) {
-    //     this.logger.warn(`no records found for: `, getRecordDTO);
-    //   }
-    //   for (const usaplRecord of usaplRecords) {
-    //     const record: RecordDTO = {
-    //       weight: usaplRecord.weight,
-    //       recordLevel: getRecordDTO.recordLevel,
-    //       weightClassID: usaplRecord.weightClass.name.replace('-', ''),
-    //       discipline: usaplRecord.discipline,
-    //       division: usaplRecord.division,
-    //       sex: getRecordDTO.sex,
-    //       equipmentLevel: getRecordDTO.equipmentLevel,
-    //     };
-    //
-    //     if (getRecordDTO.recordLevel === 'state') {
-    //       record.usState = getRecordDTO.state;
-    //     }
-    //
-    //     await this.recordsService.create(record);
-    //   }
-    // }
-    //
-    // // return records;
-    // // save to db
-    // return await this.recordsService.findAll();
+    for (const getRecordDTO of getRecordsDTOs) {
+      const usaplRecords = await this.usaplService.getRecords(getRecordDTO);
+
+      if (usaplRecords.length === 0) {
+        this.logger.warn(`no records found for: `, getRecordDTO);
+      }
+
+      for (const usaplRecord of usaplRecords) {
+        const record: RecordDTO = {
+          weight: usaplRecord.weight,
+          recordLevel: getRecordDTO.recordLevel,
+          weightClassID: usaplRecord.weightClass.name.replace('-', ''),
+          discipline: usaplRecord.discipline,
+          division: usaplRecord.division,
+          sex: usaplRecord.weightClass.sex,
+          equipmentLevel: getRecordDTO.equipmentLevel,
+        };
+
+        // TODO: we're pulling all the state records from the database, rather than pulling an individual state
+        // we need a way to decipher which state the record is for
+
+        // if (getRecordDTO.recordLevel === 'state') {
+        //   record.usState = getRecordDTO.state;
+        // }
+
+        await this.recordsService.createOrUpdate(record);
+      }
+    }
+
+    // return records;
+    // save to db
+    return await this.recordsService.findAll();
   }
 }
 export const slliToUsaplEquipmentMap = new Map<

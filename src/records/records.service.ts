@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, Repository } from 'typeorm';
 import { Record } from './records.entity';
@@ -17,6 +17,26 @@ export class RecordsService {
 
   update(id: number, record: RecordDTO) {
     return this.recordsRepository.update(id, record);
+  }
+
+  async createOrUpdate(recordDTO: RecordDTO) {
+    const rec = await this.recordsRepository.findOneBy({
+      recordLevel: recordDTO.recordLevel,
+      equipmentLevel: recordDTO.equipmentLevel,
+      division: recordDTO.division,
+      discipline: recordDTO.discipline,
+      weightClassID: recordDTO.weightClassID,
+      sex: recordDTO.sex,
+      // state: recordDTO.state,
+    });
+
+    if (rec) {
+      new Logger(RecordsService.name).debug('updating record', rec.id);
+      rec.weight = recordDTO.weight;
+      return this.recordsRepository.save(rec);
+    }
+
+    return this.recordsRepository.save(recordDTO);
   }
 
   findAll(): Promise<Record[]> {
