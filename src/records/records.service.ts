@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, Repository } from 'typeorm';
 import { Record } from './records.entity';
@@ -31,7 +31,6 @@ export class RecordsService {
     });
 
     if (rec) {
-      new Logger(RecordsService.name).debug('updating record', rec.id);
       rec.weight = recordDTO.weight;
       return this.recordsRepository.save(rec);
     }
