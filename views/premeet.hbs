@@ -4,6 +4,13 @@
     <title>Pre Meet</title>
   </head>
   <body>
+    <nav> 
+      <ul>
+        <li><a href='/slli/session'>Sessions</a></li>
+        <li><a href='/slli/records'>Records</a></li>
+        <li><a href='/slli/'>Record Aggregation</a></li>
+      </ul>
+    </nav>
     <h3>Records</h3>
     <form id='recordOptionsForm' action='/slli/generateRecords' method='POST'>
       <fieldset>
@@ -71,7 +78,7 @@
         </div>
       </fieldset>
       <fieldset>
-        <legend>Record Levels</legend>
+        <legend>Divisions</legend>
 
         <div>
           <input type='checkbox' name='divisionOption' id='openDiv' value='O' />
@@ -169,6 +176,9 @@ async function sendData() {
       body: JSON.stringify(body),
     });
     console.log(response);
+    if(response.redirected){
+      window.location.href = response.url
+    }
   } catch (e) {
     console.error(e);
   }
