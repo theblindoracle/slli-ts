@@ -82,12 +82,16 @@ export class SlliController {
 
   @Post('generateRecords')
   @UsePipes(new ValidationPipe({ transform: true }))
-  storeRecords(@Body() getRecordsDTO: GetRecordsDTO) {
-    return this.premeetService.getRecords(
+  async storeRecords(
+    @Res() res: Response,
+    @Body() getRecordsDTO: GetRecordsDTO,
+  ) {
+    await this.premeetService.getRecords(
       getRecordsDTO.equipmentLevels,
       getRecordsDTO.recordLevels,
       getRecordsDTO.divisions,
     );
+    return res.redirect('/slli/records');
   }
 
   @Get('records')
