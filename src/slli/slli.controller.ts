@@ -12,6 +12,7 @@ import {
 import { SessionManagerService } from './slli.service';
 import { SlliPreMeetService } from './premeet/premeet.service';
 import { GetRecordsDTO } from './slli.dtos';
+import { RecordsService } from 'src/records/records.service';
 
 @Controller('slli')
 export class SlliController {
@@ -19,6 +20,7 @@ export class SlliController {
   constructor(
     private readonly slliService: SessionManagerService,
     private readonly premeetService: SlliPreMeetService,
+    private readonly recordsService: RecordsService,
   ) {}
 
   @Post('startSession')
@@ -58,5 +60,12 @@ export class SlliController {
       getRecordsDTO.recordLevels,
       getRecordsDTO.divisions,
     );
+  }
+
+  @Get('records')
+  @Render('records')
+  async records() {
+    const records = await this.recordsService.findAll();
+    return { records: records };
   }
 }
