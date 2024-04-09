@@ -6,13 +6,15 @@ import {
   Post,
   Query,
   Render,
+  Res,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
 import { SessionManagerService } from './slli.service';
 import { SlliPreMeetService } from './premeet/premeet.service';
-import { GetRecordsDTO } from './slli.dtos';
+import { DeleteDTO, GetRecordsDTO, StartDTO } from './slli.dtos';
 import { RecordsService } from 'src/records/records.service';
+import { Response } from 'express';
 
 @Controller('slli')
 export class SlliController {
@@ -40,13 +42,39 @@ export class SlliController {
     );
   }
 
-  @Post('generate')
-  generate(
-    @Query('meetID') meetID: string,
-    @Query('password') password: string,
-  ) {
-    return this.premeetService.generatePreMeetReport(meetID, password);
+  @Get('session')
+  @Render('session')
+  session() {
+    return { sessions: this.slliService.getSessions() };
   }
+
+  @Post('session/create')
+  @UsePipes(new ValidationPipe({ transform: true }))
+  start(@Res() res: Response, @Body() startDTO: StartDTO) {
+    this.slliService.startSession(
+      startDTO.meetID,
+      startDTO.platformID,
+      startDTO.password,
+      startDTO.token,
+      startDTO.sceneType,
+    );
+    return res.redirect('/slli/session');
+  }
+
+  @Post('session/delete')
+  @UsePipes(new ValidationPipe({ transform: true }))
+  delete(@Body() deleteDTO: DeleteDTO, @Res() res: Response) {
+    this.slliService.stopSession(deleteDTO.id);
+    return res.redirect('/slli/session');
+  }
+
+  // @Post('generate')
+  // generate(
+  //   @Query('meetID') meetID: string,
+  //   @Query('password') password: string,
+  // ) {
+  //   return this.premeetService.generatePreMeetReport(meetID, password);
+  // }
 
   @Get()
   @Render('premeet')

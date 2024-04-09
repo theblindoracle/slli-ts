@@ -39,5 +39,13 @@ export class LiftingcastSessionService {
     this.logger.log(`created session for ${meetID}:${platformID}`);
   }
 
-  stopSession() {}
+  stopSession(meetID: string, platformID: string) {
+    const idx = this.sessions.findIndex(
+      (value) => value.meetID === meetID && value.platformID === platformID,
+    );
+
+    if (idx !== -1) {
+      this.sessions.splice(idx, 1);
+    }
+  }
 }

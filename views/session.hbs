@@ -1,0 +1,73 @@
+<html lang='en'>
+  <head>
+    <meta charset='UTF-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+    <title>Session Details</title>
+    <style>
+      table { border-collapse: collapse; width: 100%; } th, td { border: 1px
+      solid black; padding: 8px; text-align: left; } th { background-color:
+      #f2f2f2; } .delete-button { background-color: #ff6347; color: white;
+      border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+      .delete-button:hover { background-color: #ff0000; }
+    </style>
+  </head>
+  <body>
+    <h2>Session Details Form</h2>
+    <form id='sessionForm' action='/slli/session/create' method='POST'>
+      <input type='text' id='meetID' name='meetID' required />
+      <label for='meetID'>Lifingcast Meet ID</label>
+      <br /><br />
+
+      <input type='text' id='platformID' name='platformID' required />
+      <label for='platformID'>Lifingcast Platform ID</label>
+      <br /><br />
+
+      <input type='password' id='password' name='password' required />
+      <label for='password'>Liftincast Password</label>
+      <br /><br />
+
+      <input type='text' id='token' name='token' required />
+      <label for='token'>Singular Control App Token</label>
+      <br /><br />
+
+      <select id='sceneType' name='sceneType' required>
+        <option value='0'>Main</option>
+        <option value='1'>Audience </option>
+      </select>
+      <label for='sceneType'>Overlay Type</label>
+      <br /><br />
+
+      <button type='submit'>Submit</button>
+    </form>
+    <h2>Session Details</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Liftingcast Meet ID</th>
+          <th>Liftingcast Platform ID</th>
+          <th>Liftingcast Password</th>
+          <th>Singular App Token</th>
+          <th>Scene Type</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each sessions}}
+          <tr>
+            <td>{{liftingcastMeetID}}</td>
+            <td>{{liftingcastPlatformID}}</td>
+            <td>{{liftingcastPassword}}</td>
+            <td>{{singularAppToken}}</td>
+            <td>{{sceneType}}</td>
+            <td><form action='/slli/session/delete' method='POST'><button
+                  name='id'
+                  class='delete-button'
+                  data-id='{{id}}'
+                  value='{{id}}'
+                >Delete</button></form></td>
+          </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </body>
+</html>
