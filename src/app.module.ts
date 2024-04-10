@@ -10,6 +10,8 @@ import { Record } from './records/records.entity';
 import { UsaplModule } from './usapl/usapl.module';
 import { RankingsModule } from './rankings/rankings.module';
 import { Ranking } from './rankings/rankings.entity';
+import { Session } from './session/session.entity';
+import { SessionModule } from './session/session.module';
 
 @Module({
   imports: [
@@ -17,7 +19,7 @@ import { Ranking } from './rankings/rankings.entity';
       type: 'sqlite',
       database: 'db/db',
       synchronize: true,
-      entities: [Record, Ranking],
+      entities: [Record, Ranking, Session],
     }),
     EventEmitterModule.forRoot(),
     LiftingcastModule,
@@ -26,6 +28,7 @@ import { Ranking } from './rankings/rankings.entity';
     RecordsModule,
     UsaplModule,
     RankingsModule,
+    SessionModule,
   ],
 })
 export class AppModule implements NestModule {

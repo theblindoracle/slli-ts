@@ -30,7 +30,7 @@
       <br /><br />
 
       <input type='password' id='password' name='password' required />
-      <label for='password'>Liftincast Password</label>
+      <label for='password'>Liftingcast Password</label>
       <br /><br />
 
       <input type='text' id='token' name='token' required />
@@ -61,10 +61,10 @@
       <tbody>
         {{#each sessions}}
           <tr>
-            <td>{{liftingcastMeetID}}</td>
-            <td>{{liftingcastPlatformID}}</td>
-            <td>{{liftingcastPassword}}</td>
-            <td>{{singularAppToken}}</td>
+            <td>{{lcMeetID}}</td>
+            <td>{{lcPlatformID}}</td>
+            <td>{{lcPassword}}</td>
+            <td>{{slControlAppToken}}</td>
             <td>{{sceneType}}</td>
             <td><form action='/slli/session/delete' method='POST'><button
                   name='id'

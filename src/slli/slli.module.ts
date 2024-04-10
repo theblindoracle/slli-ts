@@ -8,6 +8,7 @@ import { UsaplModule } from 'src/usapl/usapl.module';
 import { SlliPreMeetService } from './premeet/premeet.service';
 import { RecordsModule } from 'src/records/records.module';
 import { RankingsModule } from 'src/rankings/rankings.module';
+import { SessionModule } from 'src/session/session.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { RankingsModule } from 'src/rankings/rankings.module';
     UsaplModule,
     RecordsModule,
     RankingsModule,
+    SessionModule,
   ],
   controllers: [SlliController],
   providers: [SessionManagerService, SlliPreMeetService],

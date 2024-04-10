@@ -15,6 +15,7 @@ import { SlliPreMeetService } from './premeet/premeet.service';
 import { DeleteDTO, GetRecordsDTO, StartDTO } from './slli.dtos';
 import { RecordsService } from 'src/records/records.service';
 import { Response } from 'express';
+import { SessionService } from 'src/session/session.service';
 
 @Controller('slli')
 export class SlliController {
@@ -23,7 +24,8 @@ export class SlliController {
     private readonly slliService: SessionManagerService,
     private readonly premeetService: SlliPreMeetService,
     private readonly recordsService: RecordsService,
-  ) {}
+    private readonly sessionService: SessionService,
+  ) { }
 
   @Post('startSession')
   startSession(
@@ -44,14 +46,15 @@ export class SlliController {
 
   @Get('session')
   @Render('session')
-  session() {
-    return { sessions: this.slliService.getSessions() };
+  async session() {
+    const sessions = await this.sessionService.findAll();
+    return { sessions: sessions };
   }
 
   @Post('session/create')
   @UsePipes(new ValidationPipe({ transform: true }))
-  start(@Res() res: Response, @Body() startDTO: StartDTO) {
-    this.slliService.startSession(
+  async start(@Res() res: Response, @Body() startDTO: StartDTO) {
+    await this.slliService.startSession(
       startDTO.meetID,
       startDTO.platformID,
       startDTO.password,
@@ -63,8 +66,8 @@ export class SlliController {
 
   @Post('session/delete')
   @UsePipes(new ValidationPipe({ transform: true }))
-  delete(@Body() deleteDTO: DeleteDTO, @Res() res: Response) {
-    this.slliService.stopSession(deleteDTO.id);
+  async delete(@Body() deleteDTO: DeleteDTO, @Res() res: Response) {
+    await this.slliService.stopSession(deleteDTO.id);
     return res.redirect('/slli/session');
   }
 
@@ -78,7 +81,7 @@ export class SlliController {
 
   @Get()
   @Render('premeet')
-  root() {}
+  root() { }
 
   @Post('generateRecords')
   @UsePipes(new ValidationPipe({ transform: true }))

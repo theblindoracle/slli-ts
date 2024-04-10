@@ -1,44 +1,58 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { LiftingcastSessionService } from 'src/liftingcast/liftingcast.sessionService';
+import { SessionService } from 'src/session/session.service';
 import { SceneManagerService } from 'src/singularlive/singularlive.scenemanager';
 
 @Injectable()
-export class SessionManagerService {
+export class SessionManagerService implements OnModuleInit {
   constructor(
     private readonly liftingcastSessionService: LiftingcastSessionService,
     private readonly sceneManagerService: SceneManagerService,
-  ) {}
+    private readonly sessionService: SessionService,
+  ) { }
   private readonly logger = new Logger(SessionManagerService.name);
 
-  id = 0;
-  sessions = new Array<SessionDetails>();
+  async onModuleInit() {
+    const sessions = await this.sessionService.findAll();
 
-  getSessions() {
-    return this.sessions;
+    for (const session of sessions) {
+      this.liftingcastSessionService.startSession(
+        session.lcMeetID,
+        session.lcPlatformID,
+        session.lcPassword,
+      );
+
+      this.sceneManagerService.addScene(
+        session.slControlAppToken,
+        session.sceneType,
+        session.lcMeetID,
+        session.lcPlatformID,
+      );
+    }
   }
 
-  stopSession(id: number) {
-    const idx = this.sessions.findIndex((session) => session.id === id);
+  async stopSession(id: number) {
+    const session = await this.sessionService.findOneBy({ id });
 
-    if (idx !== -1) {
-      const session = this.sessions[idx];
-
-      const lcSessionCount = this.sessions.filter(
-        (sess) =>
-          sess.liftingcastMeetID === session.liftingcastMeetID &&
-          sess.liftingcastPlatformID === session.liftingcastPlatformID,
-      ).length;
-      if (lcSessionCount <= 1) {
-        this.liftingcastSessionService.stopSession(
-          session.liftingcastMeetID,
-          session.liftingcastPlatformID,
-        );
-      }
-
-      this.sceneManagerService.removeScene(session.singularAppToken);
-
-      this.sessions.splice(idx, 1);
+    if (session === null) {
+      this.logger.log(`Session with id ${id} was not found`);
+      return;
     }
+    const lcSessionCount = (await this.sessionService.findAll()).filter(
+      (sess) =>
+        sess.lcMeetID === session.lcMeetID &&
+        sess.lcPlatformID === session.lcPlatformID,
+    ).length;
+    if (lcSessionCount <= 1) {
+      this.liftingcastSessionService.stopSession(
+        session.lcMeetID,
+        session.lcPlatformID,
+      );
+    }
+
+    this.sceneManagerService.removeScene(session.slControlAppToken);
+
+    this.sessionService.remove(session.id);
   }
 
   async startSession(
@@ -48,19 +62,13 @@ export class SessionManagerService {
     singularAppToken: string,
     sceneType: number,
   ) {
-    const session = {
-      id: this.id,
-      liftingcastMeetID,
-      liftingcastPlatformID,
-      liftingcastPassword,
-      singularAppToken,
-      sceneType,
-    } as SessionDetails;
-
-    this.id += 1;
-
-    this.sessions.push(session);
-    this.logger.log('starting session', session);
+    await this.sessionService.save({
+      lcMeetID: liftingcastMeetID,
+      lcPlatformID: liftingcastPlatformID,
+      lcPassword: liftingcastPassword,
+      slControlAppToken: singularAppToken,
+      sceneType: sceneType,
+    });
 
     this.liftingcastSessionService.startSession(
       liftingcastMeetID,
@@ -76,12 +84,3 @@ export class SessionManagerService {
     );
   }
 }
-
-type SessionDetails = {
-  id: number;
-  liftingcastMeetID: string;
-  liftingcastPlatformID: string;
-  liftingcastPassword: string;
-  singularAppToken: string;
-  sceneType: number;
-};
