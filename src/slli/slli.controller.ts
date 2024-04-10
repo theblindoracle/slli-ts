@@ -1,6 +1,21 @@
-import { Controller, Logger, Param, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Logger,
+  Post,
+  Query,
+  Render,
+  Res,
+  UsePipes,
+  ValidationPipe,
+} from '@nestjs/common';
 import { SessionManagerService } from './slli.service';
 import { SlliPreMeetService } from './premeet/premeet.service';
+import { DeleteDTO, GetRecordsDTO, StartDTO } from './slli.dtos';
+import { RecordsService } from 'src/records/records.service';
+import { Response } from 'express';
+import { SessionService } from 'src/session/session.service';
 
 @Controller('slli')
 export class SlliController {
@@ -8,7 +23,9 @@ export class SlliController {
   constructor(
     private readonly slliService: SessionManagerService,
     private readonly premeetService: SlliPreMeetService,
-  ) {}
+    private readonly recordsService: RecordsService,
+    private readonly sessionService: SessionService,
+  ) { }
 
   @Post('startSession')
   startSession(
@@ -27,11 +44,63 @@ export class SlliController {
     );
   }
 
-  @Post('generate')
-  generate(
-    @Query('meetID') meetID: string,
-    @Query('password') password: string,
+  @Get('session')
+  @Render('session')
+  async session() {
+    const sessions = await this.sessionService.findAll();
+    return { sessions: sessions };
+  }
+
+  @Post('session/create')
+  @UsePipes(new ValidationPipe({ transform: true }))
+  async start(@Res() res: Response, @Body() startDTO: StartDTO) {
+    await this.slliService.startSession(
+      startDTO.meetID,
+      startDTO.platformID,
+      startDTO.password,
+      startDTO.token,
+      startDTO.sceneType,
+    );
+    return res.redirect('/slli/session');
+  }
+
+  @Post('session/delete')
+  @UsePipes(new ValidationPipe({ transform: true }))
+  async delete(@Body() deleteDTO: DeleteDTO, @Res() res: Response) {
+    await this.slliService.stopSession(deleteDTO.id);
+    return res.redirect('/slli/session');
+  }
+
+  // @Post('generate')
+  // generate(
+  //   @Query('meetID') meetID: string,
+  //   @Query('password') password: string,
+  // ) {
+  //   return this.premeetService.generatePreMeetReport(meetID, password);
+  // }
+
+  @Get()
+  @Render('premeet')
+  root() { }
+
+  @Post('generateRecords')
+  @UsePipes(new ValidationPipe({ transform: true }))
+  async storeRecords(
+    @Res() res: Response,
+    @Body() getRecordsDTO: GetRecordsDTO,
   ) {
-    return this.premeetService.generatePreMeetReport(meetID, password);
+    await this.premeetService.getRecords(
+      getRecordsDTO.equipmentLevels,
+      getRecordsDTO.recordLevels,
+      getRecordsDTO.divisions,
+    );
+    return res.redirect('/slli/records');
+  }
+
+  @Get('records')
+  @Render('records')
+  async records() {
+    const records = await this.recordsService.findAll();
+    return { records: records };
   }
 }

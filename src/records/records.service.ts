@@ -19,6 +19,25 @@ export class RecordsService {
     return this.recordsRepository.update(id, record);
   }
 
+  async createOrUpdate(recordDTO: RecordDTO) {
+    const rec = await this.recordsRepository.findOneBy({
+      recordLevel: recordDTO.recordLevel,
+      equipmentLevel: recordDTO.equipmentLevel,
+      division: recordDTO.division,
+      discipline: recordDTO.discipline,
+      weightClassID: recordDTO.weightClassID,
+      sex: recordDTO.sex,
+      // state: recordDTO.state,
+    });
+
+    if (rec) {
+      rec.weight = recordDTO.weight;
+      return this.recordsRepository.save(rec);
+    }
+
+    return this.recordsRepository.save(recordDTO);
+  }
+
   findAll(): Promise<Record[]> {
     return this.recordsRepository.find();
   }

@@ -30,7 +30,7 @@ import { RecordsModel } from 'src/records/records.model';
 import { Record } from 'src/records/records.entity';
 import { RankingsModel } from 'src/rankings/rankings.model';
 import { Ranking } from 'src/rankings/rankings.entity';
-import { ExpMainAthleteBottomBar } from '../compositions/expMainAthleteBottomBar';
+import { MainAthleteBottomBar } from '../compositions/mainAthleteBottomBar';
 import { LiftingcastDivisionDecoder } from 'src/liftingcast/liftingcast.decoder';
 import { StandingsSourceWidget } from '../compositions/standingsSource';
 
@@ -41,13 +41,13 @@ export class MainScene {
     private readonly singularliveService: SingularliveService,
     private readonly recordsModel: RecordsModel,
     private readonly rankingsModel: RankingsModel,
-  ) { }
+  ) {}
 
   meetID: string;
   platformID: string;
   controlAppToken: string;
 
-  private readonly mainAthleteBottomBarComp = new ExpMainAthleteBottomBar();
+  private readonly mainAthleteBottomBarComp = new MainAthleteBottomBar();
   private readonly lightsComp = new LightsComp();
   private readonly shortTimerComp = new ShortTimerComp();
   private readonly nextLiftersComp = new NextLiftersComp();
@@ -199,9 +199,6 @@ export class MainScene {
     this.lightState = this.initialLights;
     this.record = null;
 
-    if (event.platformID !== this.platformID && event.meetID !== this.meetID)
-      return;
-
     const meetDocument = event.meetDocument;
     const platform = meetDocument.platforms.find(
       (platform) => platform.id === event.platformID,
@@ -304,7 +301,6 @@ export class MainScene {
   ) {
     const phase1Updates: UpdateControlAppContentDTO[] = [];
     const phase2Updates: UpdateControlAppContentDTO[] = [];
-
     if (currentAttempt.liftName === 'squat') {
       phase1Updates.push({
         subCompositionId: this.mainAthleteBottomBarComp.squatCompID,
@@ -340,7 +336,7 @@ export class MainScene {
         currentAttempt,
       ),
     });
-
+    this.logger.debug(phase1Updates);
     const decoded = new LiftingcastDivisionDecoder().decode(divisionName);
     phase1Updates.push({
       subCompositionId: this.mainAthleteBottomBarComp.weightClassCompID,

@@ -1,0 +1,194 @@
+<html>
+  <head>
+    <meta charset='utf-8' />
+    <title>Pre Meet</title>
+  </head>
+  <body>
+    <nav> 
+      <ul>
+        <li><a href='/slli/session'>Sessions</a></li>
+        <li><a href='/slli/records'>Records</a></li>
+        <li><a href='/slli/'>Record Aggregation</a></li>
+      </ul>
+    </nav>
+    <h3>Records</h3>
+    <form id='recordOptionsForm' action='/slli/generateRecords' method='POST'>
+      <fieldset>
+        <legend>Equipment Level</legend>
+        <div>
+          <input type='checkbox' name='equipmentLevel' id='rawEq' value='raw' />
+          <label for='rawEq'>Raw</label>
+        </div>
+        <div>
+          <input
+            type='checkbox'
+            name='equipmentLevel'
+            id='rawWithWrapsEq'
+            value='rawWithWraps'
+          />
+          <label for='rawWithWrapsEq'>Raw With Wraps</label>
+        </div>
+        <div>
+          <input
+            type='checkbox'
+            name='equipmentLevel'
+            id='equippedEq'
+            value='equipped'
+          />
+          <label for='equippedEq'>Equipped</label>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Record Levels</legend>
+        <div>
+          <input
+            type='checkbox'
+            name='recordLevel'
+            id='stateRec'
+            value='state'
+          />
+          <label for='stateRec'>State</label>
+        </div>
+        <div>
+          <input
+            type='checkbox'
+            name='recordLevel'
+            id='americanRec'
+            value='american'
+          />
+          <label for='americanRec'>American</label>
+        </div>
+        <div>
+          <input
+            type='checkbox'
+            name='recordLevel'
+            id='nationalRec'
+            value='national'
+          />
+          <label for='nationalRec'>National</label>
+        </div>
+        <div>
+          <input
+            type='checkbox'
+            name='recordLevel'
+            id='worldRec'
+            value='world'
+          />
+          <label for='worldRec'>World</label>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Divisions</legend>
+
+        <div>
+          <input type='checkbox' name='divisionOption' id='openDiv' value='O' />
+          <label for='openDiv'>Open</label>
+        </div>
+        <div>
+          <input
+            type='checkbox'
+            name='divisionOption'
+            id='youth1Div'
+            value='Y1'
+          />
+          <label for='youth1Div'>Youth 1</label>
+        </div>
+        <div>
+          <input
+            type='checkbox'
+            name='divisionOption'
+            id='youth2Div'
+            value='Y2'
+          />
+          <label for='youth2Div'>Youth 2</label>
+        </div>
+        <div>
+          <input
+            type='checkbox'
+            name='divisionOption'
+            id='youth3Div'
+            value='Y3'
+          />
+          <label for='youth3Div'>Youth 3</label>
+        </div>
+        <div>
+          <input type='checkbox' name='divisionOption' id='teen1Div' value='T1' />
+          <label for='teen1Div'>Teen 1</label>
+        </div>
+        <div>
+          <input type='checkbox' name='divisionOption' id='teen2Div' value='T2' />
+          <label for='teen2Div'>Teen 2</label>
+        </div>
+        <div>
+          <input type='checkbox' name='divisionOption' id='teen3Div' value='T3' />
+          <label for='teen3Div'>Teen 3</label>
+        </div>
+        <div>
+          <input
+            type='checkbox'
+            name='divisionOption'
+            id='juniorDiv'
+            value='JR'
+          />
+          <label for='juniorDiv'>Junior</label>
+        </div>
+        <div>
+          <input
+            type='checkbox'
+            name='divisionOption'
+            id='collegiateDiv'
+            value='C'
+          />
+          <label for='collegiateDiv'>Collegiate</label>
+        </div>
+        <div>
+          <input
+            type='checkbox'
+            name='divisionOption'
+            id='masterDiv'
+            value='M'
+          />
+          <label for='masterDiv'>Master</label>
+        </div>
+      </fieldset>
+      <div>
+        <input type='submit'></input>
+      </div>
+    </form>
+  </body>
+  <script>
+  const form = document.querySelector("#recordOptionsForm");
+
+async function sendData() {
+  const equipmentLevels = [...document.querySelectorAll('input[name=equipmentLevel]:checked')].map(e => e.value)
+  const recordLevels = [...document.querySelectorAll('input[name=recordLevel]:checked')].map(e => e.value)
+  const divisions = [...document.querySelectorAll('input[name=divisionOption]:checked')].map(e => e.value)
+
+  const body = {equipmentLevels, recordLevels, divisions}
+  try {
+    const response = await fetch("http://localhost:3000/slli/generateRecords", {
+      method: "POST",
+      redirect: "follow",
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body),
+    });
+    console.log(response);
+    if(response.redirected){
+      window.location.href = response.url
+    }
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+// Take over form submission
+form.addEventListener("submit", (event) => {
+  event.preventDefault();
+  sendData();
+});
+
+  </script>
+</html>

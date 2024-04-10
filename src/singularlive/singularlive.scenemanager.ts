@@ -29,6 +29,16 @@ export class SceneManagerService {
 
   private readonly scenes = [];
 
+  removeScene(controlAppToken: string) {
+    const idx = this.scenes.findIndex(
+      (scene) => scene.controlAppToken === controlAppToken,
+    );
+
+    if (idx !== -1) {
+      this.scenes.splice(idx, 1);
+    }
+  }
+
   addScene(
     controlAppToken: string,
     sceneType: SceneType,
