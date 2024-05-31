@@ -1,27 +1,18 @@
 import { HttpService } from '@nestjs/axios';
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { AxiosError, isAxiosError } from 'axios';
-import { catchError, retry, throwError, timer } from 'rxjs';
+import { catchError, retry, timer } from 'rxjs';
 
 @Injectable()
 export class LiftingcastEndpoint {
   private couchdbBaseUrl = 'https://couchdb.backup.liftingcast.com';
   private apiBaseUrl = 'https://backup.liftingcast.com/apiv2';
-
+  private apiKey: string;
   private readonly logger = new Logger(LiftingcastEndpoint.name);
 
-  constructor(private readonly httpService: HttpService) {
-    this.httpService.axiosRef.interceptors.request.use((config) => {
-      // this.logger.log(`REQUEST: ${config.url} ${config.params} ${config.data}`);
-      return config;
-    });
-
-    this.httpService.axiosRef.interceptors.response.use((config) => {
-      // this.logger.log(
-      //   `RESPONSE: ${config.config.url} ${config.status} ${config.statusText} ${config.data}`,
-      // );
-      return config;
-    });
+  constructor(private readonly configService: ConfigService, private readonly httpService: HttpService) {
+    this.apiKey = this.configService.getOrThrow("LC_API_KEY")
   }
 
   getPlatformDocument(
@@ -52,10 +43,13 @@ export class LiftingcastEndpoint {
 
   getMeet(meetId: string, password: string) {
     const url = `${this.apiBaseUrl}/meets/${meetId}`;
-
+    this.logger.log(this.apiKey, meetId, password, url)
     return this.httpService
       .get(url, {
-        headers: { Authorization: 'Basic ' + btoa(`${meetId}:${password}`) },
+        headers: {
+          "x-api-key": this.apiKey,
+          Authorization: 'Basic ' + btoa(`${meetId}:${password}`)
+        },
       })
       .pipe(
         retry({
