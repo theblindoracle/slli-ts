@@ -13,6 +13,7 @@ import { Ranking } from './rankings/rankings.entity';
 import { Session } from './session/session.entity';
 import { SessionModule } from './session/session.module';
 import { ConfigModule } from '@nestjs/config';
+import { RootModule } from './root.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { ConfigModule } from '@nestjs/config';
     UsaplModule,
     RankingsModule,
     SessionModule,
+    RootModule
   ],
 })
 export class AppModule implements NestModule {
