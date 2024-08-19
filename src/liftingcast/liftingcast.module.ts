@@ -5,6 +5,7 @@ import { LiftingcastEndpoint } from './liftingcast.endpoint';
 import { LiftingcastController } from './liftingcast.controller';
 import { LiftingcastEventListeners } from './liftingcast.listeners';
 import { LiftingcastSessionService } from './liftingcast.sessionService';
+import { LiftingcastWebsocketService } from './liftingcast.ws';
 
 @Module({
   imports: [HttpModule],
@@ -13,6 +14,7 @@ import { LiftingcastSessionService } from './liftingcast.sessionService';
     LiftingcastService,
     LiftingcastEventListeners,
     LiftingcastSessionService,
+    LiftingcastWebsocketService
   ],
   controllers: [LiftingcastController],
   exports: [
