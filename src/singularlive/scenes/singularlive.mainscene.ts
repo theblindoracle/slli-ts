@@ -41,7 +41,7 @@ export class MainScene {
     private readonly singularliveService: SingularliveService,
     private readonly recordsModel: RecordsModel,
     private readonly rankingsModel: RankingsModel,
-  ) {}
+  ) { }
 
   meetID: string;
   platformID: string;
@@ -122,9 +122,9 @@ export class MainScene {
   private isLiftGoodViaLights(lightState: RefLights) {
     return isRefDecisionGood(lightState.left.decision)
       ? isRefDecisionGood(lightState.head.decision) ||
-          isRefDecisionGood(lightState.right.decision)
+      isRefDecisionGood(lightState.right.decision)
       : isRefDecisionGood(lightState.head.decision) &&
-          isRefDecisionGood(lightState.right.decision);
+      isRefDecisionGood(lightState.right.decision);
   }
 
   async playLiftResult(refLights: RefLights) {
@@ -402,17 +402,23 @@ export class MainScene {
       });
     }
 
-    await this.singularliveService.updateControlAppContent(
-      this.controlAppToken,
-      phase1Updates,
-    );
+    phase1Updates.forEach(async (update) => {
+      await this.singularliveService.updateControlAppContent(
+        this.controlAppToken,
+        update,
+      );
+
+    })
 
     await delay(7000);
     if (phase2Updates.length > 0) {
-      await this.singularliveService.updateControlAppContent(
-        this.controlAppToken,
-        phase2Updates,
-      );
+      phase2Updates.forEach(async (update) => {
+
+        await this.singularliveService.updateControlAppContent(
+          this.controlAppToken,
+          update,
+        );
+      })
     }
   }
 }
