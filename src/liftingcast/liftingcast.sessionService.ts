@@ -9,9 +9,9 @@ export class LiftingcastSessionService {
   constructor(
     private readonly liftingcastService: LiftingcastService,
     private readonly eventEmitter: EventEmitter2,
-  ) {}
+  ) { }
 
-  private readonly sessions = new Array<LiftingcastSession>();
+  private readonly sessions = new Array<LiftingcastSession>(); // next time, use a map
 
   startSession(meetID: string, platformID: string, password: string) {
     if (

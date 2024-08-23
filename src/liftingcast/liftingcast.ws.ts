@@ -1,21 +1,23 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger, Type } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { WebSocket } from "ws";
 import { MeetApiResponse } from "./liftingcast.types";
+import { EventEmitter2 } from "@nestjs/event-emitter";
 
 @Injectable()
 export class LiftingcastWebsocketService {
   private readonly logger = new Logger(LiftingcastWebsocketService.name)
   private readonly ws: WebSocket
-  private meetState: MeetApiResponse
   private lastPing: number
   private lastPong: number
   private latencyList: number[] = []
-  private latency: number
   private heartbeatTimeout: NodeJS.Timeout
   private pingInterval: NodeJS.Timeout
 
-  constructor(private readonly configService: ConfigService) {
+  latency: number
+  meetState: MeetApiResponse
+
+  constructor(private readonly configService: ConfigService, private readonly eventEmitter: EventEmitter2) {
     const apiKey = this.configService.getOrThrow("LC_API_KEY")
     const wsUrl = this.configService.getOrThrow("LC_WS_URL")
     const meetId = this.configService.getOrThrow("LC_MEET_ID")
@@ -33,7 +35,9 @@ export class LiftingcastWebsocketService {
     this.ws.on("open", () => {
       this.logger.log("opening connection")
       heartbeat()
-      // TODO: implement onOpen
+
+      this.ws.send("ping");
+      this.lastPing = Date.now()
     })
 
     this.ws.on("message", (data) => {
@@ -42,32 +46,29 @@ export class LiftingcastWebsocketService {
 
 
       if (dataString === "ping") {
-        // TODO: implement onPing
         this.ws.send("pong")
         return
       }
       if (dataString === "pong") {
-        // TODO: implement onPong
         this.lastPong = Date.now()
         calculateLatency()
         return
       }
 
-      if (dataString !== "ping" && dataString !== "pong")
-        try {
-          const parsedData = JSON.parse(dataString);
-          this.meetState = { ...this.meetState, ...parsedData };
-          // TODO: implement onUpdate
-          this.logger.log("Meet state updated")
+      try {
+        const parsedData = JSON.parse(dataString);
+        this.meetState = { ...this.meetState, ...parsedData };
+        this.logger.log("Meet state updated")
+        this.eventEmitter.emit(LC_EVENTS.MEET_UPDATED, { meetDoc: this.meetState })
 
-        } catch (e) {
-          console.log("Error saving message: ", e);
-        }
+      } catch (e) {
+        console.log("Error saving message: ", e);
+      }
     })
 
     this.ws.on("error", (data) => {
       this.logger.error("Error from websocket", data)
-      // TODO: implement onEroor
+      this.eventEmitter.emit(LC_EVENTS.ERROR, { error: data })
 
     })
 
@@ -90,7 +91,7 @@ export class LiftingcastWebsocketService {
         const newList = [...this.latencyList, latency].slice(0, 10)
         const average = newList.reduce((a, b) => (a + b)) / newList.length
         this.latency = average
-        this.logger.log("latency", latency)
+        this.eventEmitter.emit(LC_EVENTS.LATENCY_UPDATED, { latency })
       }
     }
 
@@ -106,4 +107,22 @@ export class LiftingcastWebsocketService {
       }, 60000);
     };
   }
+}
+
+export const LC_EVENTS = {
+  LATENCY_UPDATED: "lc.latency_updated",
+  MEET_UPDATED: "lc.meet_updated",
+  ERROR: "lc.error"
+} as const
+
+export type LCMeetUpdatedEvent = {
+  meetDoc: MeetApiResponse
+}
+
+export type LCLatencyUpdatedEvent = {
+  latency: number
+}
+
+export type LCErrorEvent = {
+  error: unknown
 }

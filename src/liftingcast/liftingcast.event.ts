@@ -38,7 +38,3 @@ export class ClockStateChangedEvent extends Event<ClockStateChangedEvent> {
   currentState: string;
   clockDuration: number;
 }
-
-export class MeetDocumentUpdatedEvent extends Event<MeetDocumentUpdatedEvent> {
-  meetDocument: MeetDocument;
-}
