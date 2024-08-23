@@ -9,9 +9,9 @@ export class MeetDocument {
 export type ClockState = 'initial' | 'started';
 
 export class RefLights {
-  left: RefLightDecision;
-  head: RefLightDecision;
-  right: RefLightDecision;
+  left?: RefLightDecision;
+  head?: RefLightDecision;
+  right?: RefLightDecision;
 }
 
 export class RefLightDecision {
@@ -38,32 +38,32 @@ export type LightDoc = {
 
 export class Lifter {
   id: string;
-  memberNumner: string;
-  name: string;
-  gender: string;
-  team: string;
-  state: string;
-  country: string;
-  bodyWeight: number;
-  lot: number;
-  session: number;
-  flight: string;
-  squatRackHeight: string;
-  benchRackHeight: string;
-  platform: string;
+  memberNumber: string | null;
+  name: string | null;
+  gender: string | null;
+  team: string | null;
+  state: string | null;
+  country: string | null;
+  bodyWeight: number | null;
+  lot: number | null;
+  session: number | string | null;
+  flight: string | null;
+  squatRackHeight: string | null;
+  benchRackHeight: string | null;
+  platform: string | null;
   divisions: LifterDivision[];
   lifts: LifterLifts;
 }
 
 export class LifterDivision {
-  divisionId?: string;
-  weightClassId?: string;
-  score?: number;
-  forecastedScore?: number;
-  place?: number;
-  forecastedPlace?: number;
-  total: number;
-  forecastedTotal: number;
+  divisionId: string | null;
+  weightClassId: string | null;
+  score: string | number | null;
+  forecastedScore: string | number | null;
+  place: number | null;
+  forecastedPlace: number | null;
+  total: number | null;
+  forecastedTotal: number | null;
 }
 
 export class Lift {
@@ -82,12 +82,19 @@ export class LifterLifts {
 
 export class Platform {
   id: string;
-  name: string;
-  barAndCollarWeight: number;
+  name?: string;
+  barAndCollarWeight?: number;
   currentAttempt?: Attempt;
   nextAttempts: Attempt[];
 }
 
+// {
+//   id: string;
+//   name: string | null;
+//   barAndCollarsWeight: number | null;
+//   currentAttempt: Attempt | null;
+//   nextAttempts: Attempt[];
+// }
 export type LiftName = 'squat' | 'bench' | 'dead';
 
 export class Attempt {

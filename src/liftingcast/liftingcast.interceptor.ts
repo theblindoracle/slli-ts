@@ -3,7 +3,7 @@ import { LCErrorEvent, LCLatencyUpdatedEvent, LCMeetUpdatedEvent, LC_EVENTS } fr
 import { EventEmitter2, OnEvent } from "@nestjs/event-emitter";
 import { ClockStateChangedEvent, CurrentAttemptUpdatedEvent, LiftingcastEvents, RefLightUpdatedEvent } from "./liftingcast.event";
 import { ConfigService } from "@nestjs/config";
-import { Lift, MeetDocument } from "./liftingcast.enteties";
+import { Lift, Lifter, MeetDocument, Platform } from "./liftingcast.enteties";
 import { MeetApiResponse } from "./liftingcast.types";
 
 
@@ -145,8 +145,8 @@ export class LiftingcastInterceptor {
 
   }
 
-  private transformMeetData(json) {
-    const lifters = Object.values(json.lifters).map((lcLifter: any) => {
+  private transformMeetData(json: MeetApiResponse): MeetDocument {
+    const lifters: Lifter[] = Object.values(json.lifters).map((lcLifter) => {
       const squats = Object.values(lcLifter.lifts.squat);
       const benches = Object.values(lcLifter.lifts.bench);
       const deadlifts = Object.values(lcLifter.lifts.dead);
@@ -157,6 +157,7 @@ export class LiftingcastInterceptor {
 
       return {
         ...lcLifter,
+        session: lcLifter.session,
         divisions,
         lifts: {
           squat: squats,
@@ -166,7 +167,14 @@ export class LiftingcastInterceptor {
       };
     });
 
-    const platforms = Object.values(json.platforms);
+    const platforms: Platform[] = Object.values(json.platforms).map(value => ({
+      id: value.id,
+      name: value.name,
+      nextAttempts: value.nextAttempts,
+      barAndCollarWeight: value.barAndCollarsWeight,
+      currentAttempt: value.currentAttempt
+    }));
+
     const divisions = Object.values(json.divisions).map((division: any) => {
       const weightClasses = Object.entries(division.weightClasses).map(
         (entry) => {
@@ -176,6 +184,6 @@ export class LiftingcastInterceptor {
       return { ...division, weightClasses };
     });
 
-    return { ...json, lifters, platforms, divisions } as MeetDocument
+    return { ...json, lifters, platforms, divisions }
   }
 }

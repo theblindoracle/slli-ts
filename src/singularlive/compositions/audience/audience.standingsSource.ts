@@ -2,7 +2,7 @@ import { MeetDocument } from 'src/liftingcast/liftingcast.enteties';
 
 export class StandingsSourceWidget {
   compID = '34210110-01ad-fb71-ae95-7cea34bf3f9c';
-
+  
   buildPayload = (meetState: MeetDocument) => {
     const singularLifters = meetState.lifters.map((lifter) => {
       const singularLifter = {
@@ -29,7 +29,7 @@ export class StandingsSourceWidget {
                 (weightClass) => weightClass.id === division.weightClassId,
               ).name,
               score: division.score,
-              forecastedScore: division.forecastedScore.toFixed(2),
+              forecastedScore: Number(division.forecastedScore),
               place: division.place,
               forecastedPlace: division.forecastedPlace,
               total: division.total,
@@ -41,6 +41,7 @@ export class StandingsSourceWidget {
       };
       return singularLifter;
     });
-    return { lifters: JSON.stringify(singularLifters) };
+    return { lifters: JSON.stringify(singularLifters), lastUpdate: new Date() };
   };
 }
+

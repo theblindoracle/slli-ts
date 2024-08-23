@@ -29,7 +29,7 @@ export class StandingsSourceWidget {
                 (weightClass) => weightClass.id === division.weightClassId,
               ).name,
               score: division.score,
-              forecastedScore: division.forecastedScore.toFixed(2),
+              forecastedScore: Number(division.forecastedScore).toFixed(2),
               place: division.place,
               forecastedPlace: division.forecastedPlace,
               total: division.total,
