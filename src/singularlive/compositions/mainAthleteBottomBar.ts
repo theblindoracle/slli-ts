@@ -62,7 +62,7 @@ export class MainAthleteBottomBar {
       bottomBarPayload.showAthleteRank = false;
     }
 
-    const url = teamImageUrlMap.get(currentLifter.team.toUpperCase());
+    const url = teamImageUrlMap.get(currentLifter.team ? currentLifter.team.toUpperCase() : "");
     if (url) {
       bottomBarPayload.teamImgURL = url;
       bottomBarPayload.teamVis = true;
