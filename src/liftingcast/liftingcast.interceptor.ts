@@ -20,7 +20,6 @@ export class LiftingcastInterceptor {
   ) {
 
     this.meetId = this.configService.getOrThrow("LC_MEET_ID")
-    this.meetId = this.configService.getOrThrow("LC_MEET_ID")
   }
 
 
