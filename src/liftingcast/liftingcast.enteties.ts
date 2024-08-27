@@ -19,7 +19,7 @@ export class RefLightDecision {
   cards?: RefDecisionCards;
 }
 
-export type RefDecision = 'good' | 'bad';
+export type RefDecision = 'good' | 'bad' | null;
 
 export class RefDecisionCards {
   red?: boolean;
@@ -67,7 +67,7 @@ export class LifterDivision {
 }
 
 export class Lift {
-  id: string;
+  id: string | null;
   weight?: number;
   result?: string;
   // need to transform json from LC
@@ -106,13 +106,13 @@ export class Attempt {
 
 export class Division {
   id: string;
-  name: string;
-  scoreBy: string;
+  name: string | null;
+  scoreBy: string | null;
   weightClasses: WeightClass[];
 }
 
 export class WeightClass {
   id: string;
-  name: string;
-  maxWeight: number;
+  name: string | null;
+  maxWeight: number | null;
 }
