@@ -16,12 +16,12 @@ export class SessionManagerService implements OnModuleInit {
     const sessions = await this.sessionService.findAll();
 
     for (const session of sessions) {
-      this.liftingcastSessionService.startSession(
-        session.lcMeetID,
-        session.lcPlatformID,
-        session.lcPassword,
-      );
-
+      // this.liftingcastSessionService.startSession(
+      //   session.lcMeetID,
+      //   session.lcPlatformID,
+      //   session.lcPassword,
+      // );
+      //
       this.sceneManagerService.addScene(
         session.slControlAppToken,
         session.sceneType,
@@ -70,11 +70,11 @@ export class SessionManagerService implements OnModuleInit {
       sceneType: sceneType,
     });
 
-    this.liftingcastSessionService.startSession(
-      liftingcastMeetID,
-      liftingcastPlatformID,
-      liftingcastPassword,
-    );
+    // this.liftingcastSessionService.startSession(
+    //   liftingcastMeetID,
+    //   liftingcastPlatformID,
+    //   liftingcastPassword,
+    // );
 
     this.sceneManagerService.addScene(
       singularAppToken,
