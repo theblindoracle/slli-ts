@@ -1,7 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { LCErrorEvent, LCLatencyUpdatedEvent, LCMeetUpdatedEvent, LC_EVENTS } from "./liftingcast.ws";
 import { EventEmitter2, OnEvent } from "@nestjs/event-emitter";
-import { ClockStateChangedEvent, CurrentAttemptUpdatedEvent, LiftingcastEvents, RefLightUpdatedEvent } from "./liftingcast.event";
+import { AttemptChangedEvent, ClockStateChangedEvent, CurrentAttemptUpdatedEvent, LiftingcastEvents, RefLightUpdatedEvent } from "./liftingcast.event";
 import { ConfigService } from "@nestjs/config";
 import { Lift, Lifter, MeetDocument, Platform } from "./liftingcast.enteties";
 import { MeetApiResponse } from "./liftingcast.types";
@@ -11,7 +11,7 @@ import { MeetApiResponse } from "./liftingcast.types";
 export class LiftingcastInterceptor {
   private readonly logger = new Logger(LiftingcastInterceptor.name)
   private meetId: string;
-  private meetState: MeetApiResponse
+  private previousMeetState: MeetApiResponse
 
 
   constructor(
@@ -35,11 +35,12 @@ export class LiftingcastInterceptor {
     const meetData = this.transformMeetData(event.meetDoc)
 
     Object.values(event.meetDoc.platforms).forEach(platform => {
-      if (this.meetState) {
+      if (this.previousMeetState) {
 
-        const previousState = Object.values(this.meetState.platforms).find(prev => prev.id === platform.id)
+        const previousPlatformState = Object.values(this.previousMeetState.platforms).find(prev => prev.id === platform.id)
 
-        if (platform.currentAttempt.id !== previousState.currentAttempt.id) {
+
+        if (platform.currentAttempt.id !== previousPlatformState.currentAttempt.id) {
           this.logger.log(LiftingcastEvents.CurrentAttemptUpdated)
           this.eventEmitter.emit(LiftingcastEvents.CurrentAttemptUpdated, new CurrentAttemptUpdatedEvent({
             meetID: this.meetId,
@@ -47,7 +48,8 @@ export class LiftingcastInterceptor {
             meetDocument: meetData
           }))
         }
-        if (JSON.stringify(platform.refLights.head) !== JSON.stringify(previousState.refLights.head)) {
+
+        if (JSON.stringify(platform.refLights.head) !== JSON.stringify(previousPlatformState.refLights.head)) {
           this.logger.log(LiftingcastEvents.RefLightUpdatedEvent)
           this.eventEmitter.emit(LiftingcastEvents.RefLightUpdatedEvent, new RefLightUpdatedEvent({
             meetID: this.meetId,
@@ -56,7 +58,7 @@ export class LiftingcastInterceptor {
             decision: platform.refLights.head.decision,
             cards: platform.refLights.head.cards,
           }))
-        } else if (JSON.stringify(platform.refLights.left) !== JSON.stringify(previousState.refLights.left)) {
+        } else if (JSON.stringify(platform.refLights.left) !== JSON.stringify(previousPlatformState.refLights.left)) {
           this.logger.log(LiftingcastEvents.RefLightUpdatedEvent)
           this.eventEmitter.emit(LiftingcastEvents.RefLightUpdatedEvent, new RefLightUpdatedEvent({
             meetID: this.meetId,
@@ -65,7 +67,7 @@ export class LiftingcastInterceptor {
             decision: platform.refLights.left.decision,
             cards: platform.refLights.left.cards,
           }))
-        } else if (JSON.stringify(platform.refLights.right) !== JSON.stringify(previousState.refLights.right)) {
+        } else if (JSON.stringify(platform.refLights.right) !== JSON.stringify(previousPlatformState.refLights.right)) {
           this.logger.log(LiftingcastEvents.RefLightUpdatedEvent)
           this.eventEmitter.emit(LiftingcastEvents.RefLightUpdatedEvent, new RefLightUpdatedEvent({
             meetID: this.meetId,
@@ -76,15 +78,29 @@ export class LiftingcastInterceptor {
           }))
         }
 
-        if (platform.clockState !== previousState.clockState ||
-          platform.clockTimerLength !== previousState.clockTimerLength) {
+        if (platform.clockState !== previousPlatformState.clockState ||
+          platform.clockTimerLength !== previousPlatformState.clockTimerLength) {
           this.logger.log(LiftingcastEvents.ClockStateChanged)
           this.eventEmitter.emit(LiftingcastEvents.ClockStateChanged, new ClockStateChangedEvent({
             meetID: this.meetId,
             platformID: platform.id,
-            previousState: previousState.clockState,
+            previousState: previousPlatformState.clockState,
             currentState: platform.clockState,
             clockDuration: platform.clockTimerLength,
+          }))
+        }
+
+        //check if attempt has changed
+
+        const previousLifter = Object.values(this.previousMeetState.lifters).find(lifter => lifter.id === previousPlatformState.currentAttempt.lifter.id)
+        const currentLifter = Object.values(event.meetDoc.lifters).find(lifter => lifter.id === platform.currentAttempt.lifter.id)
+
+        if (JSON.stringify(previousLifter.lifts) !== JSON.stringify(currentLifter.lifts)) {
+          this.logger.log(LiftingcastEvents.AttemptChanged)
+          this.eventEmitter.emit(LiftingcastEvents.AttemptChanged, new AttemptChangedEvent({
+            meetID: this.meetId,
+            platformID: platform.id,
+            meetDocument: meetData
           }))
         }
       } else {
@@ -129,7 +145,7 @@ export class LiftingcastInterceptor {
       }
     })
 
-    this.meetState = event.meetDoc
+    this.previousMeetState = event.meetDoc
   }
 
   @OnEvent(LC_EVENTS.LATENCY_UPDATED)

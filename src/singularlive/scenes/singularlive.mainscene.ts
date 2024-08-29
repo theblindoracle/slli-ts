@@ -12,6 +12,7 @@ import {
 import { UpdateControlAppContentDTO } from '../singularlive.dtos';
 import { Logger } from '@nestjs/common';
 import {
+  AttemptChangedEvent,
   ClockStateChangedEvent,
   CurrentAttemptUpdatedEvent,
   RefLightUpdatedEvent,
@@ -34,6 +35,7 @@ import { MainAthleteBottomBar } from '../compositions/mainAthleteBottomBar';
 import { LiftingcastDivisionDecoder } from 'src/liftingcast/liftingcast.decoder';
 import { StandingsSourceWidget } from '../compositions/standingsSource';
 import { IfSuccessfulComp } from '../compositions/ifSuccessful';
+import { AttemptChangeComp } from '../compositions/attemptChange';
 
 export class MainScene {
   private readonly logger = new Logger(MainScene.name);
@@ -57,6 +59,7 @@ export class MainScene {
   private readonly recordAttemptComp = new RecordAttemptComp();
   private readonly successfulRecordComp = new SuccessfulRecordComp();
   private readonly ifSuccessfulComp = new IfSuccessfulComp();
+  private readonly attemptChangeComp = new AttemptChangeComp();
 
   standingsSourceWidget = new StandingsSourceWidget();
 
@@ -431,5 +434,23 @@ export class MainScene {
         );
       })
     }
+  }
+
+  async onAttemptChanged(e: AttemptChangedEvent) {
+    await this.singularliveService.updateControlAppContent(this.controlAppToken,
+      {
+        subCompositionId: this.attemptChangeComp.compID,
+        state: "In"
+      })
+
+    await delay(3000)
+
+    await this.singularliveService.updateControlAppContent(this.controlAppToken,
+      {
+        subCompositionId: this.attemptChangeComp.compID,
+        state: "Out"
+      })
+
+    await this.onCurrentAttemptUpdated(e)
   }
 }

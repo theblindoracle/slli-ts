@@ -15,6 +15,7 @@ export enum LiftingcastEvents {
   ClockStateChanged = 'liftingcast.clockStateChanged',
   RefLightUpdatedEvent = 'liftingcast.refLightUpdated',
   MeetDocumentUpdated = 'liftingcast.meetDocumentUpdated',
+  AttemptChanged = 'liftingcast.attemptChanged',
 }
 
 export class RefLightUpdatedEvent extends Event<RefLightUpdatedEvent> {
@@ -37,4 +38,10 @@ export class ClockStateChangedEvent extends Event<ClockStateChangedEvent> {
   previousState: string;
   currentState: string;
   clockDuration: number;
+}
+
+export class AttemptChangedEvent extends Event<CurrentAttemptUpdatedEvent> {
+  meetID: string;
+  platformID: string;
+  meetDocument: MeetDocument;
 }

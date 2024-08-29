@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { MainScene } from './scenes/singularlive.mainscene';
 import { SingularliveService } from './singularlive.service';
 import {
+  AttemptChangedEvent,
   ClockStateChangedEvent,
   CurrentAttemptUpdatedEvent,
   LiftingcastEvents,
@@ -25,7 +26,7 @@ export class SceneManagerService {
     private readonly recordModel: RecordsModel,
     private readonly rankingsModel: RankingsModel,
     private readonly eventEmmiter: EventEmitter2,
-  ) {}
+  ) { }
 
   private readonly scenes = [];
 
@@ -95,6 +96,13 @@ export class SceneManagerService {
       LiftingcastEvents.RefLightUpdatedEvent,
       (e: RefLightUpdatedEvent) => {
         mainScene.onRefLightsUpdated(e);
+      },
+    );
+
+    this.eventEmmiter.on(
+      LiftingcastEvents.AttemptChanged,
+      (e: AttemptChangedEvent) => {
+        mainScene.onAttemptChanged(e);
       },
     );
     return mainScene;
