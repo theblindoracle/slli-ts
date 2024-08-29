@@ -33,6 +33,7 @@ import { Ranking } from 'src/rankings/rankings.entity';
 import { MainAthleteBottomBar } from '../compositions/mainAthleteBottomBar';
 import { LiftingcastDivisionDecoder } from 'src/liftingcast/liftingcast.decoder';
 import { StandingsSourceWidget } from '../compositions/standingsSource';
+import { IfSuccessfulComp } from '../compositions/ifSuccessful';
 
 export class MainScene {
   private readonly logger = new Logger(MainScene.name);
@@ -55,6 +56,7 @@ export class MainScene {
   private readonly thirdAttemptStingerComp = new ThirdAttemptStingerComp();
   private readonly recordAttemptComp = new RecordAttemptComp();
   private readonly successfulRecordComp = new SuccessfulRecordComp();
+  private readonly ifSuccessfulComp = new IfSuccessfulComp();
 
   standingsSourceWidget = new StandingsSourceWidget();
 
@@ -195,7 +197,6 @@ export class MainScene {
     if (event.meetID !== this.meetID || event.platformID !== this.platformID) {
       return;
     }
-
     this.lightState = this.initialLights;
     this.record = null;
 
@@ -298,6 +299,7 @@ export class MainScene {
     nextLifters: string[],
     currentAttemptRecord: Record,
     currentLifterRanking?: Ranking,
+
   ) {
     const phase1Updates: UpdateControlAppContentDTO[] = [];
     const phase2Updates: UpdateControlAppContentDTO[] = [];
@@ -327,6 +329,15 @@ export class MainScene {
       });
     }
 
+    const ifSuccessfulPayload: UpdateControlAppContentDTO = {
+      subCompositionId: this.ifSuccessfulComp.compID,
+      payload: this.ifSuccessfulComp.buildPayload(currentLifter.divisions[0].place, currentLifter.divisions[0].forecastedPlace),
+    }
+
+    phase1Updates.push(ifSuccessfulPayload)
+
+    console.log(phase1Updates)
+
     phase1Updates.push({
       subCompositionId:
         this.mainAthleteBottomBarComp.mainAthleteBottomBarCompID,
@@ -336,7 +347,7 @@ export class MainScene {
         currentAttempt,
       ),
     });
-    this.logger.debug(phase1Updates);
+
     const decoded = new LiftingcastDivisionDecoder().decode(divisionName);
     phase1Updates.push({
       subCompositionId: this.mainAthleteBottomBarComp.weightClassCompID,
