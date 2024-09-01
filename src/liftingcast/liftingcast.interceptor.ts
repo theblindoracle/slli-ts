@@ -2,7 +2,6 @@ import { Injectable, Logger } from "@nestjs/common";
 import { LCErrorEvent, LCLatencyUpdatedEvent, LCMeetUpdatedEvent, LC_EVENTS } from "./liftingcast.ws";
 import { EventEmitter2, OnEvent } from "@nestjs/event-emitter";
 import { AttemptChangedEvent, ClockStateChangedEvent, CurrentAttemptUpdatedEvent, LiftingcastEvents, RefLightUpdatedEvent } from "./liftingcast.event";
-import { ConfigService } from "@nestjs/config";
 import { Lifter, MeetDocument, Platform } from "./liftingcast.enteties";
 import { MeetApiResponse } from "./liftingcast.types";
 
@@ -91,7 +90,7 @@ export class LiftingcastInterceptor {
         const previousLifter = Object.values(this.previousMeetState.lifters).find(lifter => lifter.id === previousPlatformState.currentAttempt.lifter.id)
         const currentLifter = Object.values(event.meetDoc.lifters).find(lifter => lifter.id === platform.currentAttempt.lifter.id)
 
-        if (JSON.stringify(previousLifter.lifts) !== JSON.stringify(currentLifter.lifts)) {
+        if (currentLifter.id === previousLifter.id && JSON.stringify(previousLifter.lifts) !== JSON.stringify(currentLifter.lifts)) {
           this.logger.log(LiftingcastEvents.AttemptChanged)
           this.eventEmitter.emit(LiftingcastEvents.AttemptChanged, new AttemptChangedEvent({
             meetID: event.meetID,

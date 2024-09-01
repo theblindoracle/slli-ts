@@ -40,6 +40,7 @@ import { delay } from '../singularlive.utils';
 import { SingularliveService } from '../singularlive.service';
 import { Record } from 'src/records/records.entity';
 import {
+  AttemptChangedEvent,
   ClockStateChangedEvent,
   CurrentAttemptUpdatedEvent,
   RefLightUpdatedEvent,
@@ -56,6 +57,7 @@ import {
 } from '../compositions/audience/audience.recrods';
 import { StandingsSourceWidget } from '../compositions/audience/audience.standingsSource';
 import { SquatStandingsWidget } from '../compositions/audience/audience.standings';
+import { AttemptChangeComp } from '../compositions/audience/audience.attemptChange';
 
 export class AudienceScene {
   private readonly logger = new Logger(AudienceScene.name);
@@ -95,6 +97,8 @@ export class AudienceScene {
   worldRecordWidget = new WorldRecordWidget();
 
   standingsSourceWidget = new StandingsSourceWidget();
+
+  attemptChangeComp = new AttemptChangeComp();
 
   private defaultLights: RefLights = {
     left: { decision: null },
@@ -562,4 +566,23 @@ export class AudienceScene {
       },
     );
   }
+
+  async onAttemptChanged(e: AttemptChangedEvent) {
+    await this.singularliveService.updateControlAppContent(this.controlAppToken,
+      {
+        subCompositionId: this.attemptChangeComp.compID,
+        state: "In"
+      })
+
+    await delay(3000)
+
+    await this.singularliveService.updateControlAppContent(this.controlAppToken,
+      {
+        subCompositionId: this.attemptChangeComp.compID,
+        state: "Out"
+      })
+
+    await this.onCurrentAttemptUpdated(e)
+  }
+
 }

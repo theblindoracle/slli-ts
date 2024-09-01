@@ -142,6 +142,13 @@ export class SceneManagerService {
         audienceScene.onRefLightsUpdated(e);
       },
     );
+
+    this.eventEmmiter.on(
+      LiftingcastEvents.AttemptChanged,
+      (e: AttemptChangedEvent) => {
+        audienceScene.onAttemptChanged(e);
+      },
+    );
     return audienceScene;
   }
 }
