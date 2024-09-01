@@ -1,14 +1,15 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { LiftingcastSessionService } from 'src/liftingcast/liftingcast.sessionService';
+import { LiftingcastWebsocketService } from 'src/liftingcast/liftingcast.ws';
 import { SessionService } from 'src/session/session.service';
 import { SceneManagerService } from 'src/singularlive/singularlive.scenemanager';
 
 @Injectable()
 export class SessionManagerService implements OnModuleInit {
   constructor(
-    private readonly liftingcastSessionService: LiftingcastSessionService,
     private readonly sceneManagerService: SceneManagerService,
     private readonly sessionService: SessionService,
+    private readonly liftingcastWebsocketService: LiftingcastWebsocketService
   ) { }
   private readonly logger = new Logger(SessionManagerService.name);
 
@@ -16,12 +17,8 @@ export class SessionManagerService implements OnModuleInit {
     const sessions = await this.sessionService.findAll();
 
     for (const session of sessions) {
-      // this.liftingcastSessionService.startSession(
-      //   session.lcMeetID,
-      //   session.lcPlatformID,
-      //   session.lcPassword,
-      // );
-      //
+      this.liftingcastWebsocketService.startSession(session.lcMeetID, session.lcPassword)
+
       this.sceneManagerService.addScene(
         session.slControlAppToken,
         session.sceneType,
@@ -44,9 +41,8 @@ export class SessionManagerService implements OnModuleInit {
         sess.lcPlatformID === session.lcPlatformID,
     ).length;
     if (lcSessionCount <= 1) {
-      this.liftingcastSessionService.stopSession(
+      this.liftingcastWebsocketService.stopSession(
         session.lcMeetID,
-        session.lcPlatformID,
       );
     }
 
@@ -70,11 +66,7 @@ export class SessionManagerService implements OnModuleInit {
       sceneType: sceneType,
     });
 
-    // this.liftingcastSessionService.startSession(
-    //   liftingcastMeetID,
-    //   liftingcastPlatformID,
-    //   liftingcastPassword,
-    // );
+    this.liftingcastWebsocketService.startSession(liftingcastMeetID, liftingcastPassword)
 
     this.sceneManagerService.addScene(
       singularAppToken,

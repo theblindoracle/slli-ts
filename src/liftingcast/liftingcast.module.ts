@@ -21,6 +21,7 @@ import { LiftingcastInterceptor } from './liftingcast.interceptor';
     LiftingcastService,
     LiftingcastEndpoint,
     LiftingcastSessionService,
+    LiftingcastWebsocketService
   ],
 })
 export class LiftingcastModule { }

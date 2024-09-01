@@ -1,29 +1,81 @@
-import { Injectable, Logger, Type } from "@nestjs/common";
+import { Injectable, Logger, OnModuleDestroy } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { WebSocket } from "ws";
 import { MeetApiResponse } from "./liftingcast.types";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 
 @Injectable()
-export class LiftingcastWebsocketService {
+export class LiftingcastWebsocketService implements OnModuleDestroy {
   private readonly logger = new Logger(LiftingcastWebsocketService.name)
-  private readonly ws: WebSocket
+
+  private wsSessions = new Map<string, LiftingcastWebsocket>();
+
+  constructor(private readonly configService: ConfigService, private readonly eventEmitter: EventEmitter2) { }
+
+  onModuleDestroy() {
+    this.logger.log("closing all sessions")
+    this.wsSessions.forEach(ws => ws.close())
+  }
+
+  startSession(meetID: string, password: string) {
+    const apiKey = this.configService.getOrThrow("LC_API_KEY")
+    const wsUrl = this.configService.getOrThrow("LC_WS_URL")
+
+    if (this.wsSessions.has(meetID)) {
+      this.logger.log(`WS already exists for: ${meetID}`)
+      const ws = this.wsSessions.get(meetID)
+      // does this increment the listenerCount of the value being held in the map?
+      ws.listenerCount++
+      this.logger.log(`${meetID} Listener Count: ${ws.listenerCount}`)
+      return
+    }
+
+    const ws = new LiftingcastWebsocket(meetID, password, apiKey, wsUrl, this.eventEmitter)
+
+    this.wsSessions.set(meetID, ws)
+
+    this.logger.log(`created websocket for meetID: ${meetID}`)
+  }
+
+  stopSession(meetID: string) {
+    if (!this.wsSessions.has(meetID)) {
+      this.logger.warn(`Websocket with meetID does not exist: ${meetID}`)
+    }
+
+    const ws = this.wsSessions.get(meetID)
+
+    if (ws.listenerCount === 1) {
+      ws.close()
+      this.wsSessions.delete(meetID)
+    } else {
+      ws.listenerCount--
+    }
+
+  }
+
+
+}
+
+export class LiftingcastWebsocket {
+  private readonly eventEmitter: EventEmitter2
+  private readonly logger = new Logger(LiftingcastWebsocket.name)
   private lastPing: number
   private lastPong: number
   private latencyList: number[] = []
   private heartbeatTimeout: NodeJS.Timeout
   private pingInterval: NodeJS.Timeout
+  private ws: WebSocket
 
   latency: number
   meetState: MeetApiResponse
+  listenerCount: number
 
-  constructor(private readonly configService: ConfigService, private readonly eventEmitter: EventEmitter2) {
-    const apiKey = this.configService.getOrThrow("LC_API_KEY")
-    const wsUrl = this.configService.getOrThrow("LC_WS_URL")
-    const meetId = this.configService.getOrThrow("LC_MEET_ID")
-    const password = this.configService.getOrThrow("LC_PASSWORD")
+  constructor(meetID: string, password: string, apiKey: string, wsUrl: string, eventEmitter: EventEmitter2) {
 
-    this.ws = new WebSocket(`${wsUrl}?meetId=${meetId}&auth=${encodeURI(btoa(`${meetId}:${password}`))}&apiKey=${encodeURI(apiKey)}`)
+    this.eventEmitter = eventEmitter
+    this.listenerCount = 1;
+
+    this.ws = new WebSocket(`${wsUrl}?meetId=${meetID}&auth=${encodeURI(btoa(`${meetID}:${password}`))}&apiKey=${encodeURI(apiKey)}`)
 
     this.pingInterval = setInterval(() => {
       // If you send a "ping" message server will respond with a "pong" message.
@@ -59,7 +111,7 @@ export class LiftingcastWebsocketService {
         const parsedData = JSON.parse(dataString);
         this.meetState = { ...this.meetState, ...parsedData };
         this.logger.log("Meet state updated")
-        this.eventEmitter.emit(LC_EVENTS.MEET_UPDATED, { meetDoc: this.meetState })
+        this.eventEmitter.emit(LC_EVENTS.MEET_UPDATED, { meetID: meetID, meetDoc: this.meetState })
 
       } catch (e) {
         console.log("Error saving message: ", e);
@@ -107,7 +159,14 @@ export class LiftingcastWebsocketService {
       }, 60000);
     };
   }
+
+  close() {
+    clearTimeout(this.heartbeatTimeout)
+    clearTimeout(this.pingInterval)
+    this.ws.close()
+  }
 }
+
 
 export const LC_EVENTS = {
   LATENCY_UPDATED: "lc.latency_updated",
@@ -116,6 +175,7 @@ export const LC_EVENTS = {
 } as const
 
 export type LCMeetUpdatedEvent = {
+  meetID: string
   meetDoc: MeetApiResponse
 }
 

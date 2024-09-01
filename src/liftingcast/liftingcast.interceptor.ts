@@ -3,23 +3,19 @@ import { LCErrorEvent, LCLatencyUpdatedEvent, LCMeetUpdatedEvent, LC_EVENTS } fr
 import { EventEmitter2, OnEvent } from "@nestjs/event-emitter";
 import { AttemptChangedEvent, ClockStateChangedEvent, CurrentAttemptUpdatedEvent, LiftingcastEvents, RefLightUpdatedEvent } from "./liftingcast.event";
 import { ConfigService } from "@nestjs/config";
-import { Lift, Lifter, MeetDocument, Platform } from "./liftingcast.enteties";
+import { Lifter, MeetDocument, Platform } from "./liftingcast.enteties";
 import { MeetApiResponse } from "./liftingcast.types";
 
 
 @Injectable()
 export class LiftingcastInterceptor {
   private readonly logger = new Logger(LiftingcastInterceptor.name)
-  private meetId: string;
   private previousMeetState: MeetApiResponse
 
 
   constructor(
     private readonly eventEmitter: EventEmitter2,
-    private readonly configService: ConfigService
   ) {
-
-    this.meetId = this.configService.getOrThrow("LC_MEET_ID")
   }
 
 
@@ -43,7 +39,7 @@ export class LiftingcastInterceptor {
         if (platform.currentAttempt.id !== previousPlatformState.currentAttempt.id) {
           this.logger.log(LiftingcastEvents.CurrentAttemptUpdated)
           this.eventEmitter.emit(LiftingcastEvents.CurrentAttemptUpdated, new CurrentAttemptUpdatedEvent({
-            meetID: this.meetId,
+            meetID: event.meetID,
             platformID: platform.id,
             meetDocument: meetData
           }))
@@ -52,7 +48,7 @@ export class LiftingcastInterceptor {
         if (JSON.stringify(platform.refLights.head) !== JSON.stringify(previousPlatformState.refLights.head)) {
           this.logger.log(LiftingcastEvents.RefLightUpdatedEvent)
           this.eventEmitter.emit(LiftingcastEvents.RefLightUpdatedEvent, new RefLightUpdatedEvent({
-            meetID: this.meetId,
+            meetID: event.meetID,
             platformID: platform.id,
             position: 'head',
             decision: platform.refLights.head.decision,
@@ -61,7 +57,7 @@ export class LiftingcastInterceptor {
         } else if (JSON.stringify(platform.refLights.left) !== JSON.stringify(previousPlatformState.refLights.left)) {
           this.logger.log(LiftingcastEvents.RefLightUpdatedEvent)
           this.eventEmitter.emit(LiftingcastEvents.RefLightUpdatedEvent, new RefLightUpdatedEvent({
-            meetID: this.meetId,
+            meetID: event.meetID,
             platformID: platform.id,
             position: 'left',
             decision: platform.refLights.left.decision,
@@ -70,7 +66,7 @@ export class LiftingcastInterceptor {
         } else if (JSON.stringify(platform.refLights.right) !== JSON.stringify(previousPlatformState.refLights.right)) {
           this.logger.log(LiftingcastEvents.RefLightUpdatedEvent)
           this.eventEmitter.emit(LiftingcastEvents.RefLightUpdatedEvent, new RefLightUpdatedEvent({
-            meetID: this.meetId,
+            meetID: event.meetID,
             platformID: platform.id,
             position: 'right',
             decision: platform.refLights.right.decision,
@@ -82,7 +78,7 @@ export class LiftingcastInterceptor {
           platform.clockTimerLength !== previousPlatformState.clockTimerLength) {
           this.logger.log(LiftingcastEvents.ClockStateChanged)
           this.eventEmitter.emit(LiftingcastEvents.ClockStateChanged, new ClockStateChangedEvent({
-            meetID: this.meetId,
+            meetID: event.meetID,
             platformID: platform.id,
             previousState: previousPlatformState.clockState,
             currentState: platform.clockState,
@@ -98,7 +94,7 @@ export class LiftingcastInterceptor {
         if (JSON.stringify(previousLifter.lifts) !== JSON.stringify(currentLifter.lifts)) {
           this.logger.log(LiftingcastEvents.AttemptChanged)
           this.eventEmitter.emit(LiftingcastEvents.AttemptChanged, new AttemptChangedEvent({
-            meetID: this.meetId,
+            meetID: event.meetID,
             platformID: platform.id,
             meetDocument: meetData
           }))
@@ -106,13 +102,13 @@ export class LiftingcastInterceptor {
       } else {
 
         this.eventEmitter.emit(LiftingcastEvents.CurrentAttemptUpdated, new CurrentAttemptUpdatedEvent({
-          meetID: this.meetId,
+          meetID: event.meetID,
           platformID: platform.id,
           meetDocument: meetData
         }))
 
         this.eventEmitter.emit(LiftingcastEvents.RefLightUpdatedEvent, new RefLightUpdatedEvent({
-          meetID: this.meetId,
+          meetID: event.meetID,
           platformID: platform.id,
           position: 'head',
           decision: platform.refLights.head.decision,
@@ -120,7 +116,7 @@ export class LiftingcastInterceptor {
         }))
 
         this.eventEmitter.emit(LiftingcastEvents.RefLightUpdatedEvent, new RefLightUpdatedEvent({
-          meetID: this.meetId,
+          meetID: event.meetID,
           platformID: platform.id,
           position: 'left',
           decision: platform.refLights.left.decision,
@@ -128,7 +124,7 @@ export class LiftingcastInterceptor {
         }))
 
         this.eventEmitter.emit(LiftingcastEvents.RefLightUpdatedEvent, new RefLightUpdatedEvent({
-          meetID: this.meetId,
+          meetID: event.meetID,
           platformID: platform.id,
           position: 'right',
           decision: platform.refLights.right.decision,
@@ -136,7 +132,7 @@ export class LiftingcastInterceptor {
         }))
 
         this.eventEmitter.emit(LiftingcastEvents.ClockStateChanged, new ClockStateChangedEvent({
-          meetID: this.meetId,
+          meetID: event.meetID,
           platformID: platform.id,
           previousState: "",
           currentState: platform.clockState,

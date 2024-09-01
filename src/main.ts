@@ -11,6 +11,8 @@ async function bootstrap() {
   app.setBaseViewsDir(join(__dirname, '..', 'views'));
   app.setViewEngine('hbs');
 
+  app.enableShutdownHooks()
+
   const configService = app.get(ConfigService)
   const port = configService.get<string>("PORT")
 
