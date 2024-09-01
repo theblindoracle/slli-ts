@@ -339,8 +339,6 @@ export class MainScene {
 
     phase1Updates.push(ifSuccessfulPayload)
 
-    console.log(phase1Updates)
-
     phase1Updates.push({
       subCompositionId:
         this.mainAthleteBottomBarComp.mainAthleteBottomBarCompID,
