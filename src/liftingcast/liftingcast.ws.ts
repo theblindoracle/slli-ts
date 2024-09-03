@@ -40,6 +40,7 @@ export class LiftingcastWebsocketService implements OnModuleDestroy {
   stopSession(meetID: string) {
     if (!this.wsSessions.has(meetID)) {
       this.logger.warn(`Websocket with meetID does not exist: ${meetID}`)
+      return
     }
 
     const ws = this.wsSessions.get(meetID)

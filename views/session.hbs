@@ -9,6 +9,12 @@
       #f2f2f2; } .delete-button { background-color: #ff6347; color: white;
       border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
       .delete-button:hover { background-color: #ff0000; }
+      .start-button { background-color: #228B22; color: white;
+      border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+      .start-button:hover { background-color: #ff0000; }
+      .stop-button { background-color: #ffbd33; color: white;
+      border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+      .stop-button:hover { background-color: #ff0000; }
     </style>
   </head>
   <body>
@@ -55,6 +61,7 @@
           <th>Liftingcast Password</th>
           <th>Singular App Token</th>
           <th>Scene Type</th>
+          <th>Is Active</th>
           <th>Action</th>
         </tr>
       </thead>
@@ -66,12 +73,30 @@
             <td>{{lcPassword}}</td>
             <td>{{slControlAppToken}}</td>
             <td>{{sceneType}}</td>
-            <td><form action='/slli/session/delete' method='POST'><button
+            <td>{{isActive}}</td>
+            <td>
+              <form action='/slli/session/start' method='POST'><button
+                  name='id'
+                  class='start-button'
+                  data-id='{{id}}'
+                  value='{{id}}'
+                >Start</button>
+              </form>
+              <form action='/slli/session/stop' method='POST'><button
+                  name='id'
+                  class='stop-button'
+                  data-id='{{id}}'
+                  value='{{id}}'
+                >Stop</button>
+              </form>
+              <form action='/slli/session/delete' method='POST'><button
                   name='id'
                   class='delete-button'
                   data-id='{{id}}'
                   value='{{id}}'
-                >Delete</button></form></td>
+                >Delete</button>
+              </form>
+            </td>
           </tr>
         {{/each}}
       </tbody>

@@ -29,6 +29,9 @@ export class Session {
   @Column()
   slControlAppToken: string;
 
+  @Column("boolean", { default: false })
+  isActive: boolean;
+
   @Column('int')
   sceneType: number;
 }

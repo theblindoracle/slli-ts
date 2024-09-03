@@ -19,7 +19,8 @@ export class GetRecordsDTO {
   @ArrayNotEmpty()
   divisions: Array<DivisionOptions>;
 }
-export class StartDTO {
+
+export class CreateDTO {
   @IsString()
   meetID: string;
 
@@ -38,6 +39,18 @@ export class StartDTO {
 }
 
 export class DeleteDTO {
+  @IsNumber()
+  @Transform(({ value }) => Number(value))
+  id: number;
+}
+
+export class StartDTO {
+  @IsNumber()
+  @Transform(({ value }) => Number(value))
+  id: number;
+}
+
+export class StopDTO {
   @IsNumber()
   @Transform(({ value }) => Number(value))
   id: number;

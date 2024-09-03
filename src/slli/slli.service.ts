@@ -1,5 +1,4 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { LiftingcastSessionService } from 'src/liftingcast/liftingcast.sessionService';
 import { LiftingcastWebsocketService } from 'src/liftingcast/liftingcast.ws';
 import { SessionService } from 'src/session/session.service';
 import { SceneManagerService } from 'src/singularlive/singularlive.scenemanager';
@@ -14,7 +13,7 @@ export class SessionManagerService implements OnModuleInit {
   private readonly logger = new Logger(SessionManagerService.name);
 
   async onModuleInit() {
-    const sessions = await this.sessionService.findAll();
+    const sessions = await this.sessionService.findBy({ isActive: true })
 
     for (const session of sessions) {
       this.liftingcastWebsocketService.startSession(session.lcMeetID, session.lcPassword)
@@ -28,13 +27,14 @@ export class SessionManagerService implements OnModuleInit {
     }
   }
 
-  async stopSession(id: number) {
+  async deleteSession(id: number) {
     const session = await this.sessionService.findOneBy({ id });
 
     if (session === null) {
       this.logger.log(`Session with id ${id} was not found`);
       return;
     }
+
     const lcSessionCount = (await this.sessionService.findAll()).filter(
       (sess) =>
         sess.lcMeetID === session.lcMeetID &&
@@ -51,8 +51,7 @@ export class SessionManagerService implements OnModuleInit {
     this.sessionService.remove(session.id);
   }
 
-  async startSession(
-    liftingcastMeetID: string,
+  async createSession(liftingcastMeetID: string,
     liftingcastPlatformID: string,
     liftingcastPassword: string,
     singularAppToken: string,
@@ -63,16 +62,47 @@ export class SessionManagerService implements OnModuleInit {
       lcPlatformID: liftingcastPlatformID,
       lcPassword: liftingcastPassword,
       slControlAppToken: singularAppToken,
+      isActive: true,
       sceneType: sceneType,
     });
+  }
 
-    this.liftingcastWebsocketService.startSession(liftingcastMeetID, liftingcastPassword)
+  async startSession(sessionID: number) {
+
+    const session = await this.sessionService.findOneBy({ id: sessionID });
+
+    if (!session) {
+      this.logger.warn(`No session found with id: ${sessionID}`)
+      return
+    }
+
+    this.liftingcastWebsocketService.startSession(session.lcMeetID, session.lcPassword)
 
     this.sceneManagerService.addScene(
-      singularAppToken,
-      sceneType,
-      liftingcastMeetID,
-      liftingcastPlatformID,
+      session.slControlAppToken,
+      session.sceneType,
+      session.lcMeetID,
+      session.lcPlatformID,
     );
+
+    this.sessionService.save({ ...session, isActive: true })
+  }
+
+  async stopSession(sessionID: number) {
+
+    const session = await this.sessionService.findOneBy({ id: sessionID });
+
+    if (session === null) {
+      this.logger.log(`Session with id ${sessionID} was not found`);
+      return;
+    }
+
+    this.liftingcastWebsocketService.stopSession(session.lcMeetID)
+
+    this.sceneManagerService.removeScene(
+      session.slControlAppToken,
+    );
+
+    this.sessionService.save({ ...session, isActive: false })
   }
 }

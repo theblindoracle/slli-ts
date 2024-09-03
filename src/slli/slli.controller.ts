@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { SessionManagerService } from './slli.service';
 import { SlliPreMeetService } from './premeet/premeet.service';
-import { DeleteDTO, GetRecordsDTO, StartDTO } from './slli.dtos';
+import { DeleteDTO, GetRecordsDTO, CreateDTO, StartDTO, StopDTO } from './slli.dtos';
 import { RecordsService } from 'src/records/records.service';
 import { Response } from 'express';
 import { SessionService } from 'src/session/session.service';
@@ -27,23 +27,6 @@ export class SlliController {
     private readonly sessionService: SessionService,
   ) { }
 
-  @Post('startSession')
-  startSession(
-    @Query('meetID') meetID: string,
-    @Query('platformID') platformID: string,
-    @Query('password') password: string,
-    @Query('token') token: string,
-    @Query('sceneType') sceneType: string,
-  ) {
-    this.slliService.startSession(
-      meetID,
-      platformID,
-      password,
-      token,
-      +sceneType,
-    );
-  }
-
   @Get('session')
   @Render('session')
   async session() {
@@ -53,8 +36,8 @@ export class SlliController {
 
   @Post('session/create')
   @UsePipes(new ValidationPipe({ transform: true }))
-  async start(@Res() res: Response, @Body() startDTO: StartDTO) {
-    await this.slliService.startSession(
+  async create(@Res() res: Response, @Body() startDTO: CreateDTO) {
+    await this.slliService.createSession(
       startDTO.meetID,
       startDTO.platformID,
       startDTO.password,
@@ -67,17 +50,23 @@ export class SlliController {
   @Post('session/delete')
   @UsePipes(new ValidationPipe({ transform: true }))
   async delete(@Body() deleteDTO: DeleteDTO, @Res() res: Response) {
-    await this.slliService.stopSession(deleteDTO.id);
+    await this.slliService.deleteSession(deleteDTO.id);
     return res.redirect('/slli/session');
   }
 
-  // @Post('generate')
-  // generate(
-  //   @Query('meetID') meetID: string,
-  //   @Query('password') password: string,
-  // ) {
-  //   return this.premeetService.generatePreMeetReport(meetID, password);
-  // }
+  @Post('session/start')
+  @UsePipes(new ValidationPipe({ transform: true }))
+  async start(@Body() startDTO: StartDTO, @Res() res: Response) {
+    await this.slliService.startSession(startDTO.id);
+    return res.redirect('/slli/session');
+  }
+
+  @Post('session/stop')
+  @UsePipes(new ValidationPipe({ transform: true }))
+  async stop(@Body() startDTO: StopDTO, @Res() res: Response) {
+    await this.slliService.stopSession(startDTO.id);
+    return res.redirect('/slli/session');
+  }
 
   @Get()
   @Render('premeet')

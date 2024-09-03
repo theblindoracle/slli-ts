@@ -3,5 +3,6 @@ export class SessionDTO {
   lcPlatformID: string;
   lcPassword: string;
   slControlAppToken: string;
+  isActive: boolean;
   sceneType: number;
 }
