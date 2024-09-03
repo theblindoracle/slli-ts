@@ -85,7 +85,7 @@ export class SessionManagerService implements OnModuleInit {
       session.lcPlatformID,
     );
 
-    this.sessionService.save({ ...session, isActive: true })
+    await this.sessionService.save({ ...session, isActive: true })
   }
 
   async stopSession(sessionID: number) {
@@ -103,6 +103,6 @@ export class SessionManagerService implements OnModuleInit {
       session.slControlAppToken,
     );
 
-    this.sessionService.save({ ...session, isActive: false })
+    await this.sessionService.save({ ...session, isActive: false })
   }
 }
