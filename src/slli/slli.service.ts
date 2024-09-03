@@ -76,6 +76,10 @@ export class SessionManagerService implements OnModuleInit {
       return
     }
 
+    if (session.isActive) {
+      this.logger.warn(`session is already active: ${sessionID}`)
+    }
+
     this.liftingcastWebsocketService.startSession(session.lcMeetID, session.lcPassword)
 
     this.sceneManagerService.addScene(
@@ -95,6 +99,10 @@ export class SessionManagerService implements OnModuleInit {
     if (session === null) {
       this.logger.log(`Session with id ${sessionID} was not found`);
       return;
+    }
+
+    if (!session.isActive) {
+      this.logger.warn(`session is already inactive: ${sessionID}`)
     }
 
     this.liftingcastWebsocketService.stopSession(session.lcMeetID)
