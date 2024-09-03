@@ -48,7 +48,7 @@ export class SessionManagerService implements OnModuleInit {
 
     this.sceneManagerService.removeScene(session.slControlAppToken);
 
-    this.sessionService.remove(session.id);
+    await this.sessionService.remove(session.id);
   }
 
   async createSession(liftingcastMeetID: string,
