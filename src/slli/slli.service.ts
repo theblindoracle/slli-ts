@@ -62,7 +62,7 @@ export class SessionManagerService implements OnModuleInit {
       lcPlatformID: liftingcastPlatformID,
       lcPassword: liftingcastPassword,
       slControlAppToken: singularAppToken,
-      isActive: true,
+      isActive: false,
       sceneType: sceneType,
     });
   }
