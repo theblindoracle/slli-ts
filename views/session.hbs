@@ -75,6 +75,14 @@
             <td>{{sceneType}}</td>
             <td>{{isActive}}</td>
             <td>
+              {{#if isActive}}
+              <form action='/slli/session/stop' method='POST'><button
+                  name='id'
+                  class='stop-button'
+                  data-id='{{id}}'
+                  value='{{id}}'
+                >Stop</button>
+              {{else}}
               <form action='/slli/session/start' method='POST'><button
                   name='id'
                   class='start-button'
@@ -82,12 +90,7 @@
                   value='{{id}}'
                 >Start</button>
               </form>
-              <form action='/slli/session/stop' method='POST'><button
-                  name='id'
-                  class='stop-button'
-                  data-id='{{id}}'
-                  value='{{id}}'
-                >Stop</button>
+              {{/if}}
               </form>
               <form action='/slli/session/delete' method='POST'><button
                   name='id'
