@@ -86,6 +86,13 @@ export class SlliController {
     return res.redirect('/slli/records');
   }
 
+  @Get('generateRankings')
+  async storeRankings(
+  ) {
+    const rankings = await this.premeetService.getRankings()
+    return rankings
+  }
+
   @Get('records')
   @Render('records')
   async records() {

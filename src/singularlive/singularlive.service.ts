@@ -1,13 +1,13 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable, Logger } from '@nestjs/common';
-import { catchError, firstValueFrom } from 'rxjs';
+import { catchError, firstValueFrom, retry } from 'rxjs';
 import { UpdateControlAppContentDTO } from './singularlive.dtos';
 import { AxiosError } from 'axios';
 
 @Injectable()
 export class SingularliveService {
   logger = new Logger(SingularliveService.name);
-  constructor(private readonly httpService: HttpService) {}
+  constructor(private readonly httpService: HttpService) { }
 
   private baseUrl = `https://app.singular.live/apiv2/controlapps`;
 
@@ -25,7 +25,8 @@ export class SingularliveService {
     }
 
     return firstValueFrom(
-      this.httpService.patch<IsSuccessResponse>(url, body).pipe(
+      this.httpService.patch<IsSuccessResponse>(url, body,).pipe(
+        retry(2),
         catchError((error: AxiosError) => {
           this.logger.error(url);
           this.logger.error(body);

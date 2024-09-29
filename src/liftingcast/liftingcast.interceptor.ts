@@ -29,13 +29,17 @@ export class LiftingcastInterceptor {
 
     const meetData = this.transformMeetData(event.meetDoc)
 
+
     Object.values(event.meetDoc.platforms).forEach(platform => {
       if (this.previousMeetState) {
 
         const previousPlatformState = Object.values(this.previousMeetState.platforms).find(prev => prev.id === platform.id)
 
+        if (!platform.currentAttempt) {
+          this.logger.warn("current attempt is null", { meetID: event.meetID, platformID: platform.id })
+        }
 
-        if (platform.currentAttempt.id !== previousPlatformState.currentAttempt.id) {
+        if (JSON.stringify(platform.currentAttempt) !== JSON.stringify(previousPlatformState.currentAttempt)) {
           this.logger.log(LiftingcastEvents.CurrentAttemptUpdated)
           this.eventEmitter.emit(LiftingcastEvents.CurrentAttemptUpdated, new CurrentAttemptUpdatedEvent({
             meetID: event.meetID,
@@ -86,18 +90,17 @@ export class LiftingcastInterceptor {
         }
 
         //check if attempt has changed
+        // const previousLifter = Object.values(this.previousMeetState.lifters).find(lifter => lifter.id === previousPlatformState.currentAttempt.lifter.id)
+        // const currentLifter = Object.values(event.meetDoc.lifters).find(lifter => lifter.id === platform.currentAttempt.lifter.id)
 
-        const previousLifter = Object.values(this.previousMeetState.lifters).find(lifter => lifter.id === previousPlatformState.currentAttempt.lifter.id)
-        const currentLifter = Object.values(event.meetDoc.lifters).find(lifter => lifter.id === platform.currentAttempt.lifter.id)
-
-        if (currentLifter.id === previousLifter.id && JSON.stringify(previousLifter.lifts) !== JSON.stringify(currentLifter.lifts)) {
-          this.logger.log(LiftingcastEvents.AttemptChanged)
-          this.eventEmitter.emit(LiftingcastEvents.AttemptChanged, new AttemptChangedEvent({
-            meetID: event.meetID,
-            platformID: platform.id,
-            meetDocument: meetData
-          }))
-        }
+        // if (currentLifter.id === previousLifter.id && JSON.stringify(previousLifter.lifts) !== JSON.stringify(currentLifter.lifts)) {
+        //   this.logger.log(LiftingcastEvents.AttemptChanged)
+        //   this.eventEmitter.emit(LiftingcastEvents.AttemptChanged, new AttemptChangedEvent({
+        //     meetID: event.meetID,
+        //     platformID: platform.id,
+        //     meetDocument: meetData
+        //   }))
+        // }
       } else {
 
         this.eventEmitter.emit(LiftingcastEvents.CurrentAttemptUpdated, new CurrentAttemptUpdatedEvent({
